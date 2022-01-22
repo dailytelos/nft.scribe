@@ -1,6 +1,6 @@
 {
-  "main": "src/carbon.cert.cpp",
-  "contract": "carbon.cert",
+  "main": "src/carboncert.cpp",
+  "contract": "carboncert",
   "include": "",
   "resource": "",
   "cdt": "v1.8.1",

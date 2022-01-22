@@ -1,0 +1,283 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.2",
+    "types": [],
+    "structs": [
+        {
+            "name": "certificate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "certnum",
+                    "type": "uint64"
+                },
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "certid",
+                    "type": "string"
+                },
+                {
+                    "name": "supply",
+                    "type": "asset"
+                },
+                {
+                    "name": "claimed",
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "claimcert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "certn",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "globalvars",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "name"
+                },
+                {
+                    "name": "sval",
+                    "type": "string"
+                },
+                {
+                    "name": "nval",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "issuecert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "issuer",
+                    "type": "name"
+                },
+                {
+                    "name": "certid",
+                    "type": "string"
+                },
+                {
+                    "name": "supply",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "refund",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "refunds",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "sysaddrefund",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "sysdefaults",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "sysdelglobal",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "sysdrawacct",
+            "base": "",
+            "fields": [
+                {
+                    "name": "acct",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "sysfreeze",
+            "base": "",
+            "fields": [
+                {
+                    "name": "freeze",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "sysglobalint",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "name"
+                },
+                {
+                    "name": "nval",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "sysglobalstr",
+            "base": "",
+            "fields": [
+                {
+                    "name": "var",
+                    "type": "name"
+                },
+                {
+                    "name": "sval",
+                    "type": "string"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "claimcert",
+            "type": "claimcert",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "issuecert",
+            "type": "issuecert",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "refund",
+            "type": "refund",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysaddrefund",
+            "type": "sysaddrefund",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysdefaults",
+            "type": "sysdefaults",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysdelglobal",
+            "type": "sysdelglobal",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysdrawacct",
+            "type": "sysdrawacct",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysfreeze",
+            "type": "sysfreeze",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysglobalint",
+            "type": "sysglobalint",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysglobalstr",
+            "type": "sysglobalstr",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "certificates",
+            "type": "certificate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "globals",
+            "type": "globalvars",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "refunds",
+            "type": "refunds",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "kv_tables": {},
+    "ricardian_clauses": [],
+    "variants": [],
+    "action_results": []
+}
