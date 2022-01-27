@@ -4,6 +4,24 @@
     "types": [],
     "structs": [
         {
+            "name": "auths",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "org",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "certificate",
             "base": "",
             "fields": [
@@ -26,6 +44,14 @@
                 {
                     "name": "claimed",
                     "type": "bool"
+                },
+                {
+                    "name": "issuedate",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "claimdate",
+                    "type": "time_point_sec"
                 }
             ]
         },
@@ -40,6 +66,62 @@
                 {
                     "name": "certn",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "delauthlevel",
+            "base": "",
+            "fields": [
+                {
+                    "name": "authuser",
+                    "type": "name"
+                },
+                {
+                    "name": "user",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "delorg",
+            "base": "",
+            "fields": [
+                {
+                    "name": "authuser",
+                    "type": "name"
+                },
+                {
+                    "name": "orgid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "deposits",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "draw",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
                 }
             ]
         },
@@ -80,47 +162,99 @@
             ]
         },
         {
-            "name": "refund",
+            "name": "orgs",
             "base": "",
             "fields": [
                 {
-                    "name": "user",
-                    "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "refunds",
-            "base": "",
-            "fields": [
-                {
-                    "name": "user",
-                    "type": "name"
+                    "name": "id",
+                    "type": "uint64"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
+                    "name": "orgname",
                     "type": "string"
+                },
+                {
+                    "name": "retirenum",
+                    "type": "uint64"
                 }
             ]
         },
         {
-            "name": "sysaddrefund",
+            "name": "retirefunds",
             "base": "",
             "fields": [
+                {
+                    "name": "sender",
+                    "type": "name"
+                },
+                {
+                    "name": "supply",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "retirements",
+            "base": "",
+            "fields": [
+                {
+                    "name": "orgid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "retirenum",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "supplyret",
+                    "type": "asset"
+                },
+                {
+                    "name": "retiredate",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "setauthlevel",
+            "base": "",
+            "fields": [
+                {
+                    "name": "authuser",
+                    "type": "name"
+                },
                 {
                     "name": "user",
                     "type": "name"
                 },
                 {
-                    "name": "quant",
-                    "type": "asset"
+                    "name": "level",
+                    "type": "uint8"
                 },
                 {
-                    "name": "memo",
+                    "name": "org",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "setorg",
+            "base": "",
+            "fields": [
+                {
+                    "name": "authuser",
+                    "type": "name"
+                },
+                {
+                    "name": "orgid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "orgname",
                     "type": "string"
                 }
             ]
@@ -137,6 +271,24 @@
                 {
                     "name": "var",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "sysdeposit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },
@@ -208,18 +360,38 @@
             "ricardian_contract": ""
         },
         {
+            "name": "delauthlevel",
+            "type": "delauthlevel",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "delorg",
+            "type": "delorg",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "draw",
+            "type": "draw",
+            "ricardian_contract": ""
+        },
+        {
             "name": "issuecert",
             "type": "issuecert",
             "ricardian_contract": ""
         },
         {
-            "name": "refund",
-            "type": "refund",
+            "name": "retirefunds",
+            "type": "retirefunds",
             "ricardian_contract": ""
         },
         {
-            "name": "sysaddrefund",
-            "type": "sysaddrefund",
+            "name": "setauthlevel",
+            "type": "setauthlevel",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setorg",
+            "type": "setorg",
             "ricardian_contract": ""
         },
         {
@@ -230,6 +402,11 @@
         {
             "name": "sysdelglobal",
             "type": "sysdelglobal",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sysdeposit",
+            "type": "sysdeposit",
             "ricardian_contract": ""
         },
         {
@@ -255,8 +432,22 @@
     ],
     "tables": [
         {
+            "name": "auths",
+            "type": "auths",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "certificates",
             "type": "certificate",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "deposits",
+            "type": "deposits",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -269,8 +460,15 @@
             "key_types": []
         },
         {
-            "name": "refunds",
-            "type": "refunds",
+            "name": "orgregister",
+            "type": "orgs",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "retired",
+            "type": "retirements",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

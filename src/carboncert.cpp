@@ -1,26 +1,35 @@
 #include <carboncert.hpp>
 
 #include "./manage.cpp"
+#include "./auths.cpp"
 
 ACTION carboncert::issuecert(const name& issuer, const string& certid, const asset& supply) {
-    //checkfreeze();
+    checkfreeze();
     require_auth(issuer);
 
-    check(false, "No go");
+    min_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
 
-    //newcert(issuer, certid, supply);
+    newcert(issuer, certid, supply);
 }
 
 ACTION carboncert::claimcert(const name& issuer, const uint64_t& certn) {
-    //checkfreeze();
+    checkfreeze();
     require_auth(issuer);
 
-    check(false, "No go");
+    min_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
 
-    //getcertfunds(issuer, certn);
+    getcertfunds(issuer, certn);
 }
 
-/*
+ACTION carboncert::retirefunds(const name& sender, const asset& supply) {
+    checkfreeze();
+    require_auth(sender);
+
+    min_auth(sender, AUTH_LEVEL_CORP_ADMIN);
+
+    retiredep(sender, supply, getorgid(sender));
+}
+
 void carboncert::newcert(const name& issuer, const string& certid, const asset& supply) {
 
     int64_t nAmt = supply.amount;
@@ -47,6 +56,8 @@ void carboncert::newcert(const name& issuer, const string& certid, const asset& 
             cert_row.certid  = certid;
             cert_row.supply  = supply;
             cert_row.claimed = false;
+            cert_row.issuedate = time_point_sec(current_time_point().sec_since_epoch());
+            cert_row.claimdate = time_point_sec(0);
         
             sMemo = "Certificate #", to_string(certn) ,"  for " + sUnit + " was created by ", issuer.to_string() + " to issue " + supply.to_string() + " -- (" + certid + ")";
             print(sMemo);
@@ -63,6 +74,8 @@ void carboncert::newcert(const name& issuer, const string& certid, const asset& 
                 sMemo
             )
         ).send();
+
+        setglobalint(name("certcount"), certn);
     }
     else {
         check(false, "Contract error.");
@@ -75,6 +88,8 @@ void carboncert::getcertfunds(const name& issuer, const uint64_t& certn) {
     auto cert_itr = _certs.find(certn);
 
     check(cert_itr != _certs.end(), "Contract error, cert number does not exist. ");
+    check(cert_itr->issuer == issuer, "Only the issuer may claim their token.");
+    check(cert_itr->claimed == false, "Certificate has already been claimed.");
 
     int64_t nAmt = cert_itr->supply.amount;
     symbol_code cUnit = cert_itr->supply.symbol.code();
@@ -88,6 +103,7 @@ void carboncert::getcertfunds(const name& issuer, const uint64_t& certn) {
 
     _certs.modify( cert_itr, get_self(), [&]( auto& this_row ) {
         this_row.claimed = true;
+        this_row.claimdate = time_point_sec(current_time_point().sec_since_epoch());
     });
 
     sMemo = "Certificate #", to_string(certn) ,"  for " + sUnit + " was created by ", issuer.to_string() + " to issue " + cert_itr->supply.to_string() + " -- (" + cert_itr->certid + ")";
@@ -103,6 +119,8 @@ void carboncert::getcertfunds(const name& issuer, const uint64_t& certn) {
             sMemo
         )
     ).send();
-}*/
+}
 
-//EOSIO_DISPATCH(carboncert, (issuecert)(claimcert))
+void carboncert::retiredep(const name& sender, const asset& supply, const uint64_t& orgid) { 
+    
+}

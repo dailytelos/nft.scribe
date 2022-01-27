@@ -17,20 +17,21 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
 
     //*** Perform checks based on memo *******************************
     if( ((memo.substr(0,6) == "retire")||(memo.size() == 6)) &&
-        (to.value == name("carbon.cert").value) &&
-        (contract == getcontract()) ) {
+        (to.value == get_self().value) &&
+        (contract == getcontract()) &&
+        (sUnit == getglobalstr(name("tokensymbol"))) ) {
         
         checkfreeze();
 
         //code to retire a certificate by issuer/cert#
-
+        setdeposit(from, quant, "retire credits on deposit");
          
-    } else if(to.value == name("heartfarmsio").value) {
+    } else if(to.value == get_self().value) {
         
         if((memo.substr(0,7) == "deposit") || (memo.substr(0,6) == "refund") || (memo.substr(0,8) == "transfer"))
         {}//ok
         else {
-            check(false, "carbon.cert E-t126 (https://cx.bluefieldrenewable.com/- Memo to transfer tokens into carbon.cert must begin with: 'deposit', 'refund', 'transfer'.  Specifying 'retire' in memo will permanently retire token. ");
+            check(false, "E-t126 (https://cx.bluefieldrenewable.com/- Memo to transfer tokens into " + get_self().to_string() + " must begin with: 'deposit', 'refund', 'transfer'.  Specifying 'retire' in memo will deposit token for 'retire' action. ");
         }
     }
 }

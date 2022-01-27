@@ -7,7 +7,7 @@ ACTION carboncert::sysglobalstr(name &var, string &sval) {
 ACTION carboncert::sysglobalint(name &var, uint64_t &nval) {
     require_auth( get_self() );
     
-    check(var.value != name("certcount").value, "Variable 'certcount' must not be modified.");
+    //check(var.value != name("certcount").value, "Variable 'certcount' must not be modified.");
 
     setglobalint(var, nval);
 }
@@ -36,10 +36,10 @@ ACTION carboncert::sysdefaults() {
         setglobalint(name("issuefeettl"), 0);
     }
 
-    if(getglobalint(name("refundacct")) == 0) 
+    if(getglobalint(name("depositacct")) == 0) 
     {
-        delglobal(name("refundacct"));
-        setglobalint(name("refundacct"), 0);
+        delglobal(name("depositacct"));
+        setglobalint(name("depositacct"), 0);
     }
 
     if(getglobalint(name("certcount")) == 0) 
@@ -47,15 +47,21 @@ ACTION carboncert::sysdefaults() {
         delglobal(name("certcount"));
         setglobalint(name("certcount"), 0);
     }
+
+    if(getglobalint(name("retirements")) == 0) 
+    {
+        delglobal(name("retirements"));
+        setglobalint(name("retirements"), 0);
+    }
 }
 
 ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
     require_auth( get_self() );
     checkfreeze();
-    if(acct.value == name("refundacct").value)
+    if(acct.value == name("depositacct").value)
     {
-        check(memo == "override alpha omega delta two", "This function can not draw from the refund account, use 'refund' action.");
-        memo = "Refund account draw, this may cause an imbalance in contract totals.  Please verify balances are handled correctly! ";
+        check(memo == "override alpha omega delta two", "This function can not draw from the deposit account, use 'draw' action.");
+        memo = "Deposit account draw, this may cause an imbalance in contract totals.  Please verify balances are handled correctly! ";
     }
 
     check(quant.amount > 0, "Quantity must be greater than 0. ");
@@ -82,10 +88,10 @@ ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &
     setglobalint(acct, new_balance);
 }
 
-ACTION carboncert::sysaddrefund(name &user, asset &quant, string &memo) {
+ACTION carboncert::sysdeposit(name &user, asset &quant, string &memo) {
     require_auth( get_self() );
     checkfreeze();
-    addrefund(user, quant, memo);
+    setdeposit(user, quant, memo);
 }
 
 ACTION carboncert::sysdelglobal(name &var) {
@@ -109,33 +115,33 @@ ACTION carboncert::sysfreeze(uint64_t &freeze) {
     print("Contract frozen state updated.");
 }
 
-ACTION carboncert::refund(name &user) {
+ACTION carboncert::draw(name &user) {
     check(has_auth(user) || has_auth(get_self()), "Transaction missing required authority. ");
     checkfreeze();
-    refunds_index _refunds( get_self(), get_self().value );
-    auto itr = _refunds.find(user.value);
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
 
-    check(itr != _refunds.end(), "No refunds found associated with account. ");
+    check(itr != _deposits.end(), "No deposits found associated with account. ");
 
-    if(itr != _refunds.end()) {
-        asset refundbal = itr->quant;
-        check(refundbal.amount > 0, "Balance in account must be greater than 0. ");
-        symbol_code cUnit = refundbal.symbol.code();
+    if(itr != _deposits.end()) {
+        asset drawbal = itr->quant;
+        check(drawbal.amount > 0, "Balance in account must be greater than 0. ");
+        symbol_code cUnit = drawbal.symbol.code();
         string sUnit = cUnit.to_string();
-        uint8_t nPrec = refundbal.symbol.precision();
+        uint8_t nPrec = drawbal.symbol.precision();
         check(sUnit == getglobalstr(name("tokensymbol")), "Balance account error, mismatch in symbol. ");
         check(nPrec == getglobalint(name("tokenprec")), "Balance account error, mismatch in precision. ");
 
-        uint64_t refundacct = getglobalint(name("refundacct"));
-        if(refundacct >= 0 )
+        uint64_t depositacct = getglobalint(name("depositacct"));
+        if(depositacct >= 0 )
         {
-            int64_t new_balance = refundacct - refundbal.amount;
-            check(new_balance >= 0, "Imbalance occurred, cannot withdraw beyond total in refundacct. (Imb: a) ");
+            int64_t new_balance = depositacct - drawbal.amount;
+            check(new_balance >= 0, "Imbalance occurred, cannot withdraw beyond total in depositacct. (Imb: a) ");
             
-            setglobalint(name("refundacct"), new_balance);
+            setglobalint(name("depositacct"), new_balance);
         }
         else {
-            check(false, "Imbalance occurred, cannot withdraw beyond total in refundacct. (Imb: b) ");
+            check(false, "Imbalance occurred, cannot withdraw beyond total in depositacct. (Imb: b) ");
         }
 
         action(
@@ -145,12 +151,12 @@ ACTION carboncert::refund(name &user) {
             std::make_tuple(
             get_self(),
             itr->user,
-            refundbal,
+            drawbal,
             itr->memo
             )
         ).send();
 
-        itr = _refunds.erase( itr ); //remove row
+        itr = _deposits.erase( itr ); //remove row
     }
 }
 
@@ -255,7 +261,7 @@ name carboncert::getcontract() {
     return name(sname);
 }
 
-void carboncert::addrefund(name &user, asset &quant, string &memo) {
+void carboncert::setdeposit(name &user, asset &quant, string &memo) {
 
     int64_t nAmt = quant.amount;
     symbol_code cUnit = quant.symbol.code();
@@ -265,27 +271,27 @@ void carboncert::addrefund(name &user, asset &quant, string &memo) {
     check(nAmt > 0, "Amount in quant must be greater than 0. ");
     check(sUnit == getglobalstr(name("tokensymbol")), "Contract presently only works with " + getglobalstr(name("tokensymbol")) + " token. ");
     check(nPrec == getglobalint(name("tokenprec")), "Precision error in given value quant. ");
-    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for addrefund(...). ");
+    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for setdeposit(...). ");
 
-    refunds_index _refunds( get_self(), get_self().value );
-    auto itr = _refunds.find(user.value);
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
 
-    if(itr == _refunds.end()) {
-         _refunds.emplace( get_self(), [&]( auto& refund_row ) {
-            refund_row.user     = user;
-            refund_row.quant    = quant;
-            refund_row.memo     = memo;
-            uint64_t refundacct = (uint64_t) getglobalint(name("refundacct")) + nAmt;
-            setglobalint(name("refundacct"), refundacct);
+    if(itr == _deposits.end()) {
+         _deposits.emplace( get_self(), [&]( auto& deposit_row ) {
+            deposit_row.user     = user;
+            deposit_row.quant    = quant;
+            deposit_row.memo     = memo;
+            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) + nAmt;
+            setglobalint(name("depositacct"), depositacct);
         });
     }
     else { //modify record
-        _refunds.modify( itr, get_self(), [&]( auto& refund_row ) {
-            int64_t new_amount = nAmt + refund_row.quant.amount;
-            refund_row.quant.amount = new_amount;
-            refund_row.memo = "*Multiple* - Last Tran: " + memo;
-            uint64_t refundacct = (uint64_t) getglobalint(name("refundacct")) + nAmt;
-            setglobalint(name("refundacct"), refundacct);
+        _deposits.modify( itr, get_self(), [&]( auto& deposit_row ) {
+            int64_t new_amount = nAmt + deposit_row.quant.amount;
+            deposit_row.quant.amount = new_amount;
+            deposit_row.memo = "*Multiple* - Last Tran: " + memo;
+            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) + nAmt;
+            setglobalint(name("depositacct"), depositacct);
         });
     }
 }
