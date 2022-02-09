@@ -14,11 +14,13 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
         _auths.emplace( get_self(), [&]( auto& auth_row ) {
             auth_row.user   = user;
             auth_row.level  = level;
+            auth_row.orgid  = org;
         });
     } else { //modify
 
         _auths.modify( auths_itr, get_self(), [&]( auto& auth_row ) {
             auth_row.level = level;
+            auth_row.orgid  = org;
         });
     }
 }

@@ -48,11 +48,30 @@ ACTION carboncert::sysdefaults() {
         setglobalint(name("certcount"), 0);
     }
 
-    if(getglobalint(name("retirements")) == 0) 
+    if(getglobalint(name("retirecount")) == 0) 
     {
-        delglobal(name("retirements"));
-        setglobalint(name("retirements"), 0);
+        delglobal(name("retirecount"));
+        setglobalint(name("retirecount"), 1);
     }
+
+    if(getglobalint(name("retiredtblct")) == 0) 
+    {
+        delglobal(name("retiredtblct"));
+        setglobalint(name("retiredtblct"), 0);
+    }
+
+    if(getglobalint(name("usdval")) == 0) 
+    {
+        delglobal(name("usdval"));
+        setglobalint(name("usdval"), 0);
+    }
+
+    if(getglobalint(name("sgdval")) == 0) 
+    {
+        delglobal(name("sgdval"));
+        setglobalint(name("sgdval"), 0);
+    }
+
 }
 
 ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
@@ -91,7 +110,7 @@ ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &
 ACTION carboncert::sysdeposit(name &user, asset &quant, string &memo) {
     require_auth( get_self() );
     checkfreeze();
-    setdeposit(user, quant, memo);
+    adddeposit(user, quant, memo);
 }
 
 ACTION carboncert::sysdelglobal(name &var) {
@@ -261,7 +280,7 @@ name carboncert::getcontract() {
     return name(sname);
 }
 
-void carboncert::setdeposit(name &user, asset &quant, string &memo) {
+void carboncert::adddeposit(name &user, asset &quant, string &memo) {
 
     int64_t nAmt = quant.amount;
     symbol_code cUnit = quant.symbol.code();
@@ -271,7 +290,7 @@ void carboncert::setdeposit(name &user, asset &quant, string &memo) {
     check(nAmt > 0, "Amount in quant must be greater than 0. ");
     check(sUnit == getglobalstr(name("tokensymbol")), "Contract presently only works with " + getglobalstr(name("tokensymbol")) + " token. ");
     check(nPrec == getglobalint(name("tokenprec")), "Precision error in given value quant. ");
-    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for setdeposit(...). ");
+    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for adddeposit(...). ");
 
     deposits_index _deposits( get_self(), get_self().value );
     auto itr = _deposits.find(user.value);
@@ -294,4 +313,73 @@ void carboncert::setdeposit(name &user, asset &quant, string &memo) {
             setglobalint(name("depositacct"), depositacct);
         });
     }
+}
+
+
+void carboncert::subdeposit(name &user, asset &quant, string &memo) {
+
+    int64_t nAmt = quant.amount;
+    symbol_code cUnit = quant.symbol.code();
+    string sUnit = cUnit.to_string();
+    uint8_t nPrec = quant.symbol.precision();
+
+    check(nAmt > 0, "Amount in quant must be greater than 0. ");
+    check(sUnit == getglobalstr(name("tokensymbol")), "Contract presently only works with " + getglobalstr(name("tokensymbol")) + " token. ");
+    check(nPrec == getglobalint(name("tokenprec")), "Precision error in given value quant. ");
+    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for adddeposit(...). ");
+
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
+
+    if(itr == _deposits.end()) {
+    }
+    else { //modify record
+        check((itr->quant.amount - nAmt) > 0, "Subtracting too much deposit, just use deldeposit instead");
+
+        _deposits.modify( itr, get_self(), [&]( auto& deposit_row ) {
+            int64_t new_amount = deposit_row.quant.amount - nAmt;
+            deposit_row.quant.amount = new_amount;
+            deposit_row.memo = "*Multiple* - Last Tran: " + memo;
+            check((getglobalint(name("depositacct")) - nAmt) > 0, "Unable to modify deposits, depositacct fell to 0. ");
+            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) - nAmt;
+            setglobalint(name("depositacct"), depositacct);
+        });
+    }
+}
+
+void carboncert::deldeposit(name &user) {
+
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
+
+    check(itr != _deposits.end(), "Unable to delete deposit, user deposit not found. ");
+
+    itr = _deposits.erase( itr ); //remove row
+}
+
+asset carboncert::getdepamt(name &user) {
+
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
+
+    if(itr == _deposits.end()) {
+        return asset(0, symbol(getglobalstr(name("tokensymbol")), getglobalint(name("tokenprec"))));
+    } else {
+        return itr->quant;
+    }
+}
+
+string carboncert::getdepmemo(name &user) {
+
+    deposits_index _deposits( get_self(), get_self().value );
+    auto itr = _deposits.find(user.value);
+
+    string sRet = "";
+
+    if(itr == _deposits.end()) {
+    } else {
+        sRet = itr->memo;
+    }
+
+    return sRet;
 }

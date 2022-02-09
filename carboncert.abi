@@ -16,7 +16,7 @@
                     "type": "uint8"
                 },
                 {
-                    "name": "org",
+                    "name": "orgid",
                     "type": "uint64"
                 }
             ]
@@ -46,12 +46,42 @@
                     "type": "bool"
                 },
                 {
+                    "name": "qtyretired",
+                    "type": "asset"
+                },
+                {
+                    "name": "retired",
+                    "type": "bool"
+                },
+                {
                     "name": "issuedate",
                     "type": "time_point_sec"
                 },
                 {
                     "name": "claimdate",
                     "type": "time_point_sec"
+                },
+                {
+                    "name": "retiredate",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "certstats",
+            "base": "",
+            "fields": [
+                {
+                    "name": "orgid",
+                    "type": "uint32"
+                },
+                {
+                    "name": "dateval",
+                    "type": "uint32"
+                },
+                {
+                    "name": "supplystat",
+                    "type": "asset"
                 }
             ]
         },
@@ -180,6 +210,24 @@
             ]
         },
         {
+            "name": "retiredcert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "certnum",
+                    "type": "uint64"
+                },
+                {
+                    "name": "certid",
+                    "type": "string"
+                },
+                {
+                    "name": "qtyretired",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
             "name": "retirefunds",
             "base": "",
             "fields": [
@@ -198,11 +246,11 @@
             "base": "",
             "fields": [
                 {
-                    "name": "orgid",
+                    "name": "retirenum",
                     "type": "uint64"
                 },
                 {
-                    "name": "retirenum",
+                    "name": "orgid",
                     "type": "uint64"
                 },
                 {
@@ -212,6 +260,10 @@
                 {
                     "name": "supplyret",
                     "type": "asset"
+                },
+                {
+                    "name": "certs",
+                    "type": "retiredcert[]"
                 },
                 {
                     "name": "retiredate",
@@ -460,6 +512,13 @@
             "key_types": []
         },
         {
+            "name": "issuestat",
+            "type": "certstats",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "orgregister",
             "type": "orgs",
             "index_type": "i64",
@@ -469,6 +528,13 @@
         {
             "name": "retired",
             "type": "retirements",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "retirestat",
+            "type": "certstats",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -23,15 +23,17 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
         
         checkfreeze();
 
+        string sMemo = "retire credits on deposit";
+
         //code to retire a certificate by issuer/cert#
-        setdeposit(from, quant, "retire credits on deposit");
+        adddeposit(from, quant, sMemo);
          
     } else if(to.value == get_self().value) {
         
         if((memo.substr(0,7) == "deposit") || (memo.substr(0,6) == "refund") || (memo.substr(0,8) == "transfer"))
         {}//ok
         else {
-            check(false, "E-t126 (https://cx.bluefieldrenewable.com/- Memo to transfer tokens into " + get_self().to_string() + " must begin with: 'deposit', 'refund', 'transfer'.  Specifying 'retire' in memo will deposit token for 'retire' action. ");
+            check(false, "E-t126 - Memo to transfer tokens into " + get_self().to_string() + " must begin with: 'deposit', 'refund', 'transfer'.  Specifying 'retire' in memo will deposit token for 'retire' action. ");
         }
     }
 }

@@ -16,7 +16,7 @@
     TABLE auths {
       name      user;    //user account
       uint8_t   level;   //authorisation level assigned to user
-      uint64_t  org;     //organisation id
+      uint64_t  orgid;     //organisation id
 
       uint64_t primary_key() const { return user.value; }
     };

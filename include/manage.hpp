@@ -23,8 +23,11 @@ uint64_t getglobalint(name var);
 void setglobalint(name var, uint64_t nval);
 void delglobal(name var);
 name getcontract();
-void setdeposit(name &user, asset &quant, string &memo);
-
+void adddeposit(name &user, asset &quant, string &memo);
+void subdeposit(name &user, asset &quant, string &memo);
+void deldeposit(name &user);
+asset getdepamt(name &user);
+string getdepmemo(name &user);
 
 TABLE globalvars {
     name          var;
