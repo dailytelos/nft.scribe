@@ -23,6 +23,7 @@ uint64_t getglobalint(name var);
 void setglobalint(name var, uint64_t nval);
 void delglobal(name var);
 name getcontract();
+name getorgcontract();
 void adddeposit(name &user, asset &quant, string &memo);
 void subdeposit(name &user, asset &quant, string &memo);
 void deldeposit(name &user);

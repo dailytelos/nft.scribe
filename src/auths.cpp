@@ -3,7 +3,11 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
     checkfreeze();
 
     require_auth(authuser);
-    min_auth(authuser, AUTH_LEVEL_ROOTADMIN);
+    uint8_t nAuth = get_org_auth(authuser);
+
+    check(nAuth > level, "Authuser does not have sufficient permission. ");
+    check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+
     check( is_account( user ), "User account does not exist. ");
 
     auths_index _auths( get_self(), get_self().value );
@@ -29,7 +33,10 @@ ACTION carboncert::setorg(const name& authuser, const uint64_t& orgid, const str
     checkfreeze();
 
     require_auth(authuser);
-    min_auth(authuser, AUTH_LEVEL_ROOTADMIN);
+    uint8_t nAuth = get_org_auth(authuser);
+
+    check((nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+    
 
     orgs_index _orgs( get_self(), get_self().value );
     auto orgs_itr = _orgs.find(orgid);
@@ -52,7 +59,12 @@ ACTION carboncert::delauthlevel(const name& authuser, const name& user) {
     checkfreeze();
 
     require_auth(authuser);
-    min_auth(authuser, AUTH_LEVEL_ROOTADMIN);
+    uint8_t nAuth = get_org_auth(authuser);
+    uint8_t level = get_org_auth(user);
+
+    check(nAuth > level, "Authuser does not have sufficient permission. ");
+    check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+
     
     auths_index _auths( get_self(), get_self().value );
     auto auths_itr = _auths.find(user.value);
@@ -67,7 +79,9 @@ ACTION carboncert::delorg(const name& authuser, const uint64_t& orgid) {
     checkfreeze();
 
     require_auth(authuser);
-    min_auth(authuser, AUTH_LEVEL_ROOTADMIN);
+    uint8_t nAuth = get_org_auth(authuser);
+
+    check((nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
 
     orgs_index _orgs( get_self(), get_self().value );
     auto orgs_itr = _orgs.find(orgid);
@@ -77,7 +91,7 @@ ACTION carboncert::delorg(const name& authuser, const uint64_t& orgid) {
 	orgs_itr = _orgs.erase( orgs_itr );
 }
 
-void carboncert::min_auth(const name& user, const uint8_t& level) {
+void carboncert::min_org_auth(const name& user, const uint8_t& level) {
     if(get_self().value == user.value) { //contract itself
         require_auth(get_self());
         return;
@@ -87,6 +101,33 @@ void carboncert::min_auth(const name& user, const uint8_t& level) {
 
         check(auths_itr != _auths.end(), "User auth level does not exist. ");
         check(auths_itr->level >= level, "User fails to meet minimum authorisation. ");
+    }
+}
+
+
+void carboncert::has_org_auth(const name& user, const uint8_t& level) {
+    if(get_self().value == user.value) { //contract itself
+        require_auth(get_self());
+        return;
+    } else {
+        auths_index _auths( get_self(), get_self().value );
+        auto auths_itr = _auths.find(user.value);
+
+        check(auths_itr != _auths.end(), "User auth level does not exist. ");
+        check(auths_itr->level == level, "User fails to meet required authorisation. ");
+    }
+}
+
+uint8_t carboncert::get_org_auth(const name& user) {
+    if(get_self().value == user.value) { //contract itself
+        return AUTH_LEVEL_ROOTADMIN;
+    } else {
+        auths_index _auths( get_self(), get_self().value );
+        auto auths_itr = _auths.find(user.value);
+
+        check(auths_itr != _auths.end(), "User auth level does not exist. ");
+
+        return auths_itr->level;
     }
 }
 

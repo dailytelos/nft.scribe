@@ -16,10 +16,13 @@ ACTION carboncert::sysdefaults() {
     require_auth( get_self() );
     
     delglobal(name("tokencontr"));
-    setglobalstr(name("tokencontr"), "carbon.token");
+    setglobalstr(name("tokencontr"), "coxc.token");
 
     delglobal(name("tokensymbol"));
-    setglobalstr(name("tokensymbol"), "XXXX");
+    setglobalstr(name("tokensymbol"), "COXC");
+
+    delglobal(name("orgcontract"));
+    setglobalstr(name("orgcontract"), "coxc.cert");
 
     delglobal(name("tokenprec"));
     setglobalint(name("tokenprec"), 4);
@@ -276,6 +279,12 @@ void carboncert::delglobal(name var) {
 
 name carboncert::getcontract() {
     string sname = getglobalstr(name("tokencontr"));
+
+    return name(sname);
+}
+
+name carboncert::getorgcontract() {
+    string sname = getglobalstr(name("orgcontract"));
 
     return name(sname);
 }

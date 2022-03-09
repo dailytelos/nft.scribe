@@ -10,7 +10,9 @@
     
   private:
 
-    void min_auth(const name& user, const uint8_t& level);
+    void min_org_auth(const name& user, const uint8_t& level);
+    void has_org_auth(const name& user, const uint8_t& level);
+    uint8_t get_org_auth(const name& user);
     uint64_t getorgid(const name& user);
 
     TABLE auths {
@@ -24,8 +26,8 @@
     typedef multi_index<name("auths"), auths> auths_index;
 
     TABLE orgs {
-      uint64_t  id;      //org id
-      string   orgname;   //string name of organisation such as BLUEFIELD RENEWABLE ENERGY PTE LTD
+      uint64_t  id;        //org id
+      string   orgname;    //string name of organisation such as BLUEFIELD RENEWABLE ENERGY PTE LTD
       uint64_t retirenum;  //incrementor tracking number of retirefunds actions issued
 
       uint64_t primary_key() const { return id; }

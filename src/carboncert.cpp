@@ -8,7 +8,7 @@ ACTION carboncert::issuecert(const name& issuer, const string& certid, const ass
     checkfreeze();
     require_auth(issuer);
 
-    min_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
+    min_org_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
 
     newcert(issuer, certid, supply);
 }
@@ -17,7 +17,7 @@ ACTION carboncert::claimcert(const name& issuer, const uint64_t& certn) {
     checkfreeze();
     require_auth(issuer);
 
-    min_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
+    min_org_auth(issuer, AUTH_LEVEL_CORP_ADMIN);
 
     getcertfunds(issuer, certn);
 }
@@ -26,7 +26,7 @@ ACTION carboncert::retirefunds(const name& sender, const asset& supply) {
     checkfreeze();
     require_auth(sender);
 
-    min_auth(sender, AUTH_LEVEL_CORP_ADMIN);
+    min_org_auth(sender, AUTH_LEVEL_CORP_ADMIN);
 
     //check for sufficient deposit and reduce
     reducedep(sender, supply);

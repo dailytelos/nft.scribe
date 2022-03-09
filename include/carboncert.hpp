@@ -17,13 +17,17 @@ CONTRACT carboncert : public contract {
 
     #include "./constants.hpp"
     #include "./utility.hpp"
+
+    #include "./auth_struct.hpp"
+    #include "./cert_struct.hpp"
+
     #include "./manage.hpp"
     #include "./auths.hpp"
     #include "./transfer.hpp"
 
 
 struct retiredcert {
-    uint64_t            certnum;
+    uint64_t        certnum;
     string          certid;
     asset           qtyretired;
 
@@ -31,6 +35,9 @@ struct retiredcert {
 };
   
   public:
+/*
+    ACTION draftcert(const name& issuer, const string& certid, const string& certname, const string& extid, const time_point_sec& tstart, const time_point_sec& tend);
+    ACTION apprcert(const name& authuser, const uint64_t& certnum); */
 
     ACTION issuecert(const name& issuer, const string& certid, const asset& supply);
 
