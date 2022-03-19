@@ -168,3 +168,112 @@ tuple<name, uint8_t, uint64_t> carboncert::get_auth_row(const name& user) {
                 auths_itr->orgid
             );
 }
+
+
+uint8_t carboncert::get_status_auth(const name& user, const string& activity, const bool& submit, const bool& approve) {
+
+    check( (activity == "certs") || (activity == "send"), "Activity specified to get_status_auth is invalid. ");
+    bool bCerts = (activity == "certs");
+    bool bSend  = (activity == "send");
+
+    uint8_t nAuth = get_org_auth(user);
+
+
+    if(bCerts) {
+
+        if(!submit) {
+            if(nAuth == AUTH_LEVEL_CORP_CERTS) { return STATUS_CERT_DRAFT; }
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_DRAFT; }
+            if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_DRAFT; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_DRAFT; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_DRAFT; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(!approve) {
+            if(nAuth == AUTH_LEVEL_CORP_CERTS) { return STATUS_CERT_SUBMIT; }
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_SUBMIT; }
+            if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_SUBMIT; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_SUBMIT; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_SUBMIT; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(nAuth == AUTH_LEVEL_CORP_APPROVE) { return STATUS_CERT_CORP_APPROVED; }
+        if(nAuth == AUTH_LEVEL_CORP_ADMIN)   { return STATUS_CERT_CORP_APPROVED; }
+
+        if(nAuth == AUTH_ADMIN_CERTS)     { return STATUS_CERT_ADMIN_APPROVED; }
+        if(nAuth == AUTH_ADMIN_APPROVALS) { return STATUS_CERT_ADMIN_APPROVED; }
+        if(nAuth == AUTH_LEVEL_ROOTADMIN) { return STATUS_CERT_ADMIN_APPROVED; }
+
+        check(false, "user lacks valid get_status_auth permission. ");
+    }
+
+    if(bSend) {
+
+        if(!submit) {
+            if(nAuth == AUTH_LEVEL_CORP_SEND)  { return STATUS_SEND_DRAFT; }
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_SEND_DRAFT; }
+            if(nAuth == AUTH_ADMIN_SEND)       { return STATUS_SEND_DRAFT; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_SEND_DRAFT; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_SEND_DRAFT; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(!approve) {
+            if(nAuth == AUTH_LEVEL_CORP_SEND)  { return STATUS_SEND_SUBMIT; }
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_SEND_SUBMIT; }
+            if(nAuth == AUTH_ADMIN_SEND)       { return STATUS_SEND_SUBMIT; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_SEND_SUBMIT; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_SEND_SUBMIT; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(nAuth == AUTH_LEVEL_CORP_APPROVE) { return STATUS_SEND_CORP_APPROVED; }
+        if(nAuth == AUTH_LEVEL_CORP_ADMIN)   { return STATUS_SEND_CORP_APPROVED; }
+
+        if(nAuth == AUTH_ADMIN_SEND)     { return STATUS_SEND_ADMIN_APPROVED; }
+        if(nAuth == AUTH_ADMIN_APPROVALS) { return STATUS_SEND_ADMIN_APPROVED; }
+        if(nAuth == AUTH_LEVEL_ROOTADMIN) { return STATUS_SEND_ADMIN_APPROVED; }
+
+        check(false, "user lacks valid get_status_auth permission. ");
+    }
+
+    check(false, "contract error in get_status_auth. ");
+
+    return STATUS_NONE;
+}
+
+// Higher value equals more authority, 255 being max admin authority, 0 being view authority
+const uint8_t AUTH_LEVEL_VIEWER         = 0;    //very limited
+const uint8_t AUTH_LEVEL_CORP_CERTS     = 41;   //issue / retire certificates authorisation
+const uint8_t AUTH_LEVEL_CORP_SEND      = 51;   //send funds initation
+const uint8_t AUTH_LEVEL_CORP_APPROVE   = 61;   //2nd approver for corporate actions
+const uint8_t AUTH_LEVEL_CORP_ADMIN     = 121;  //user roles assignment
+
+const uint8_t AUTH_ADMIN_CORP_ROLES     = 191;  //user can change / assign user roles for CORPs
+const uint8_t AUTH_ADMIN_CERTS          = 201;  //user can be final approval for certs - bluefield admin
+const uint8_t AUTH_ADMIN_SEND           = 211;  //user can be final approval for send actions -- bluefield admin (ie. large value bridge actions)
+const uint8_t AUTH_ADMIN_APPROVALS      = 215;  //user can be final approval for certs and send actions -- bluefield admin
+const uint8_t AUTH_ADMIN_ADMIN_ROLES    = 221;  //user can change all admin and CORP roles
+
+const uint8_t AUTH_LEVEL_ROOTADMIN      = 255;  //highest administrator level of contract, can assign AUTH_ADMIN_ADMIN_ROLES permission and all other actions
+
+
+//CERT STATUS
+const uint8_t STATUS_CERT_NONE            = 0;
+
+const uint8_t STATUS_CERT_DRAFT           = 40;
+const uint8_t STATUS_CERT_SUBMIT          = 41;
+const uint8_t STATUS_CERT_CORP_APPROVED   = 61;
+const uint8_t STATUS_CERT_ADMIN_APPROVED  = 201;
+
+//SEND STATUS
+const uint8_t STATUS_SEND_DRAFT           = 50;
+const uint8_t STATUS_SEND_SUBMIT          = 51;
+const uint8_t STATUS_SEND_CORP_APPROVED   = 61;
+const uint8_t STATUS_SEND_ADMIN_APPROVED  = 211;

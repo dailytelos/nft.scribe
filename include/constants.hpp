@@ -10,10 +10,14 @@ const uint8_t AUTH_LEVEL_CORP_ADMIN     = 121;  //user roles assignment
 const uint8_t AUTH_ADMIN_CORP_ROLES     = 191;  //user can change / assign user roles for CORPs
 const uint8_t AUTH_ADMIN_CERTS          = 201;  //user can be final approval for certs - bluefield admin
 const uint8_t AUTH_ADMIN_SEND           = 211;  //user can be final approval for send actions -- bluefield admin (ie. large value bridge actions)
+const uint8_t AUTH_ADMIN_APPROVALS      = 215;  //user can be final approval for certs and send actions -- bluefield admin
 const uint8_t AUTH_ADMIN_ADMIN_ROLES    = 221;  //user can change all admin and CORP roles
 
 const uint8_t AUTH_LEVEL_ROOTADMIN      = 255;  //highest administrator level of contract, can assign AUTH_ADMIN_ADMIN_ROLES permission and all other actions
 
+
+//STATUS NONE
+const uint8_t STATUS_NONE                 = 0;
 
 //CERT STATUS
 const uint8_t STATUS_CERT_DRAFT           = 40;

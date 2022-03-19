@@ -4,6 +4,34 @@
     "types": [],
     "structs": [
         {
+            "name": "approvecsink",
+            "base": "",
+            "fields": [
+                {
+                    "name": "approver",
+                    "type": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "approveprod",
+            "base": "",
+            "fields": [
+                {
+                    "name": "approver",
+                    "type": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "auths",
             "base": "",
             "fields": [
@@ -410,6 +438,10 @@
                     "type": "uint8"
                 },
                 {
+                    "name": "status",
+                    "type": "uint8"
+                },
+                {
                     "name": "orgid",
                     "type": "uint64"
                 },
@@ -560,6 +592,16 @@
         }
     ],
     "actions": [
+        {
+            "name": "approvecsink",
+            "type": "approvecsink",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "approveprod",
+            "type": "approveprod",
+            "ricardian_contract": ""
+        },
         {
             "name": "delauthlevel",
             "type": "delauthlevel",

@@ -16,6 +16,8 @@
     uint64_t get_org_id(const name& user);
     tuple<name, uint8_t, uint64_t> get_auth_row(const name& user);
 
+    uint8_t get_status_auth(const name& user, const string& activity, const bool& submit, const bool& approve);
+
     TABLE auths {
       name      user;    //user account
       uint8_t   level;   //authorisation level assigned to user

@@ -2,31 +2,35 @@
 struct strctapproval {
     name approver;
     uint8_t level;         //records current level of user approver
+    uint8_t status;        //status update applied by approver
     uint64_t orgid;        //organisation id of approval
     time_point_sec tstamp; //time of approval
 
     strctapproval() {
         approver    = name("name.nullaaaa");
         level       = 0;
+        status      = 0;
         orgid       = 0;
         tstamp      = time_point_sec(0);
     };
 
-    strctapproval(name i_approver, uint8_t i_level, uint64_t i_orgid, time_point_sec i_tstamp) {
+    strctapproval(name i_approver, uint8_t i_level, uint8_t i_status, uint64_t i_orgid, time_point_sec i_tstamp) {
         approver    = i_approver;
         level       = i_level;
+        status      = i_status;
         orgid       = i_orgid;
         tstamp      = i_tstamp;
     };
 
-    strctapproval(tuple<eosio::name, uint8_t, uint64_t> &tplApprove) {
+    strctapproval(tuple<eosio::name, uint8_t, uint8_t, uint64_t> &tplApprove) {
         approver   = get<0>(tplApprove);
         level      = get<1>(tplApprove);
-        orgid      = get<2>(tplApprove);
+        status     = get<2>(tplApprove);
+        orgid      = get<3>(tplApprove);
         tstamp     = time_point_sec(current_time_point().sec_since_epoch());
     };
 
-    EOSLIB_SERIALIZE(strctapproval, (approver)(level)(orgid)(tstamp));
+    EOSLIB_SERIALIZE(strctapproval, (approver)(level)(status)(orgid)(tstamp));
 };
 
 // header structure for primary row data for certificates and also system send funds requests
@@ -71,7 +75,9 @@ struct strctheader {
 
     void add_approval(carboncert::strctapproval &approval) {
         check(approval.orgid == orgid, "Approval does not belong to the same organisation. ");
+        check(approval.status > status, "Approval is identical or less than current authorisation. ");
         approvals.push_back(approval);
+        status = approval.status;
     };
 
     EOSLIB_SERIALIZE(strctheader, (id)(strid)(type)(creator)(orgid)(status)(draftdate)(submitdate)(approvedate)(approvals));

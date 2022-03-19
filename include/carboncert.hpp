@@ -44,10 +44,15 @@ CONTRACT carboncert : public contract {
                         const uint32_t& yend,
                         const uint64_t& portid,
                         const uint64_t& prodid );
+
+
+    ACTION approveprod(const name& approver, const uint64_t& id);
+    ACTION approvecsink(const name& approver, const uint64_t& id);
     
   private:
 
     void _draftcert_p(const name& creator, const string& strid, const string& cname, const string& exid, const asset& tpot);
+
     void _draftcert_c(  const name& creator,
                         const string& strid,
                         const uint16_t& loc,
@@ -63,6 +68,8 @@ CONTRACT carboncert : public contract {
                         const uint64_t& portid,
                         const uint64_t& prodid);
 
+    void _approveprod(const name& approver, const uint64_t& id);
+    void _approvecsink(const name& approver, const uint64_t& id);
 
     TABLE prodcert {
       uint64_t  id;       //numeric id of activity
@@ -81,6 +88,4 @@ CONTRACT carboncert : public contract {
     };
     
     typedef multi_index<name("csinks"), csinkcert> csinkcert_index;
-
-
 };

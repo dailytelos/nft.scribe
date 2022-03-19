@@ -86,6 +86,37 @@ ACTION carboncert::draftcertcs( const name& creator,
                     prodid  );
 }
 
+ACTION carboncert::approveprod(const name& approver, const uint64_t& id) {
+    checkfreeze();
+    require_auth(approver);
+
+    //check for draftcert auth
+    uint8_t auth = get_org_auth(approver);
+
+    check( (auth == AUTH_LEVEL_CORP_ADMIN) ||
+           (auth == AUTH_ADMIN_CERTS) ||
+           (auth == AUTH_ADMIN_APPROVALS) ||
+           (auth == AUTH_LEVEL_ROOTADMIN), "You lack the neccessary authorisation to perform this action. ");
+
+    _approveprod(approver, id);
+}
+
+ACTION carboncert::approvecsink(const name& approver, const uint64_t& id) {
+    checkfreeze();
+    require_auth(approver);
+
+    //check for draftcert auth
+    uint8_t auth = get_org_auth(approver);
+
+    check( (auth == AUTH_LEVEL_CORP_ADMIN) ||
+           (auth == AUTH_ADMIN_CERTS) ||
+           (auth == AUTH_ADMIN_APPROVALS) ||
+           (auth == AUTH_LEVEL_ROOTADMIN), "You lack the neccessary authorisation to perform this action. ");
+
+    _approvecsink(approver, id);
+}
+
+
 void carboncert::_draftcert_p(const name& creator, const string& strid, const string& cname, const string& exid, const asset& tpot) {
 
     int64_t nAmt = tpot.amount;
@@ -106,12 +137,12 @@ void carboncert::_draftcert_p(const name& creator, const string& strid, const st
     check(pcert_itr == _prodcerts.end(), "Contract error, cert number already exists! ");
 
     tuple<name, uint8_t, uint64_t> tplApr = get_auth_row(creator);
-    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
+    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get_status_auth(creator, "certs", false, false), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
 
     _prodcerts.emplace( get_self(), [&]( auto& cert_row ) {
         cert_row.id = certn;
         cert_row.c  = cert_production(
-                        strctheader(certn, strid, name("production"), creator, get_org_id(creator), STATUS_CERT_DRAFT),
+                        strctheader(certn, strid, name("production"), creator, get_org_id(creator), STATUS_NONE),
                         crtproduction(cname, exid, tpot)
                       );
 
@@ -170,12 +201,12 @@ void carboncert::_draftcert_c(  const name& creator,
     check(ccert_itr == _csinkcerts.end(), "Contract error, cert number already exists! ");
 
     tuple<name, uint8_t, uint64_t> tplApr = get_auth_row(creator);
-    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
+    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get_status_auth(creator, "certs", false, false), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
 
     _csinkcerts.emplace( get_self(), [&]( auto& cert_row ) {
         cert_row.id = certn;
         cert_row.c  = cert_csink(
-                        strctheader(certn, strid, name("csink"), creator, get_org_id(creator), STATUS_CERT_DRAFT),
+                        strctheader(certn, strid, name("csink"), creator, get_org_id(creator), STATUS_NONE),
                         crtcsink(loc, type, desc, gross, humidity, tmin, tmax, tavg, ystart, yend, portid, prodid)
                       );
 
@@ -186,4 +217,24 @@ void carboncert::_draftcert_c(  const name& creator,
     });
 
     setglobalint(name("csinkcount"), certn);
+}
+
+void carboncert::_approveprod(const name& approver, const uint64_t& id)  {
+
+    prodcert_index _prodcerts( get_self(), get_self().value );
+    auto pcert_itr = _prodcerts.find(id);
+
+    check(pcert_itr != _prodcerts.end(), "Contract error, cert number does not exist! ");
+
+    tuple<name, uint8_t, uint64_t> tplApr = get_auth_row(approver);
+    strctapproval cApprove = strctapproval(approver, get<1>(tplApr), get_status_auth(approver, "certs", true, true), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
+
+    _prodcerts.modify( pcert_itr, get_self(), [&]( auto& cert_row ) {
+        cert_row.c.header.add_approval(cApprove);
+    });
+}
+
+
+void carboncert::_approvecsink(const name& approver, const uint64_t& id)  {
+
 }
