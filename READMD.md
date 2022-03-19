@@ -1,7 +1,14 @@
 # carbon.cert
 
-This example is to demonstrate a basic EOSIO smart contract, including
 
-- Define contract actions
-- Define a table
-- Perform read/write/remove operations on the table
+TODO List
+--------------
+- Test _draftcert_c
+
+
+
+FINISHED
+--------------
+- drafted _draftcert_c
+- carboncert::draftprod was just finished, action should be functional
+- Test carboncert::draftprod

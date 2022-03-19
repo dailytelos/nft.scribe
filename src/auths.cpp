@@ -5,8 +5,13 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
     require_auth(authuser);
     uint8_t nAuth = get_org_auth(authuser);
 
-    check(nAuth > level, "Authuser does not have sufficient permission. ");
+    if(authuser.value != get_self().value)
+    { check(nAuth > level, "Authuser does not have sufficient permission. "); }
+
     check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+    
+    if(nAuth < AUTH_ADMIN_CORP_ROLES)
+    { check(get_org_id(authuser) == get_org_id(user),"Authuser must belong to the same organisation as user. "); }
 
     check( is_account( user ), "User account does not exist. ");
 
@@ -29,14 +34,38 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
     }
 }
 
+ACTION carboncert::delauthlevel(const name& authuser, const name& user) {
+    checkfreeze();
+
+    require_auth(authuser);
+    uint8_t nAuth = get_org_auth(authuser);
+    uint8_t level = get_org_auth(user);
+
+    if(authuser.value != get_self().value)
+    { check(nAuth > level, "Authuser does not have sufficient permission. "); }
+
+    check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+    
+    if(nAuth < AUTH_ADMIN_CORP_ROLES)
+    { check(get_org_id(authuser) == get_org_id(user),"Authuser must belong to the same organisation as user. "); }
+
+    auths_index _auths( get_self(), get_self().value );
+    auto auths_itr = _auths.find(user.value);
+
+    check(auths_itr != _auths.end(), "User account does not have auth setting. ");
+
+	auths_itr = _auths.erase( auths_itr );
+}
+
+
 ACTION carboncert::setorg(const name& authuser, const uint64_t& orgid, const string& orgname) {
     checkfreeze();
 
     require_auth(authuser);
     uint8_t nAuth = get_org_auth(authuser);
 
+    check(orgid > 10, "Parameter orgid must be set above value 10, below this value are reserved. ");
     check((nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
-    
 
     orgs_index _orgs( get_self(), get_self().value );
     auto orgs_itr = _orgs.find(orgid);
@@ -53,25 +82,6 @@ ACTION carboncert::setorg(const name& authuser, const uint64_t& orgid, const str
             org_row.orgname = orgname;
         });
     }
-}
-
-ACTION carboncert::delauthlevel(const name& authuser, const name& user) {
-    checkfreeze();
-
-    require_auth(authuser);
-    uint8_t nAuth = get_org_auth(authuser);
-    uint8_t level = get_org_auth(user);
-
-    check(nAuth > level, "Authuser does not have sufficient permission. ");
-    check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
-
-    
-    auths_index _auths( get_self(), get_self().value );
-    auto auths_itr = _auths.find(user.value);
-
-    check(auths_itr != _auths.end(), "User account does not have auth setting. ");
-
-	auths_itr = _auths.erase( auths_itr );
 }
 
 
@@ -131,7 +141,7 @@ uint8_t carboncert::get_org_auth(const name& user) {
     }
 }
 
-uint64_t carboncert::getorgid(const name& user) {
+uint64_t carboncert::get_org_id(const name& user) {
     auths_index _auths( get_self(), get_self().value );
     auto auths_itr = _auths.find(user.value);
 
@@ -139,3 +149,22 @@ uint64_t carboncert::getorgid(const name& user) {
     return auths_itr->orgid;
 }
 
+tuple<name, uint8_t, uint64_t> carboncert::get_auth_row(const name& user) {
+
+    auths_index _auths( get_self(), get_self().value );
+    auto auths_itr = _auths.find(user.value);
+
+    if(auths_itr == _auths.end()) { //no entry
+        return make_tuple(
+                user,
+                AUTH_LEVEL_VIEWER,
+                0
+            );
+    } 
+
+    return make_tuple(
+                auths_itr->user,
+                auths_itr->level,
+                auths_itr->orgid
+            );
+}

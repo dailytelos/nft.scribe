@@ -22,28 +22,76 @@
             ]
         },
         {
-            "name": "certificate",
+            "name": "cert_csink",
             "base": "",
             "fields": [
                 {
-                    "name": "certnum",
-                    "type": "uint64"
+                    "name": "header",
+                    "type": "strctheader"
                 },
                 {
-                    "name": "issuer",
-                    "type": "name"
+                    "name": "data",
+                    "type": "crtcsink"
+                }
+            ]
+        },
+        {
+            "name": "cert_production",
+            "base": "",
+            "fields": [
+                {
+                    "name": "header",
+                    "type": "strctheader"
                 },
                 {
-                    "name": "certid",
+                    "name": "data",
+                    "type": "crtproduction"
+                }
+            ]
+        },
+        {
+            "name": "crtcsink",
+            "base": "",
+            "fields": [
+                {
+                    "name": "loc",
+                    "type": "uint16"
+                },
+                {
+                    "name": "type",
                     "type": "string"
                 },
                 {
-                    "name": "supply",
+                    "name": "desc",
+                    "type": "string"
+                },
+                {
+                    "name": "gross",
                     "type": "asset"
                 },
                 {
-                    "name": "claimed",
-                    "type": "bool"
+                    "name": "humidity",
+                    "type": "asset"
+                },
+                {
+                    "name": "tmin",
+                    "type": "asset"
+                },
+                {
+                    "name": "tmax",
+                    "type": "asset"
+                },
+                {
+                    "name": "tavg",
+                    "type": "asset"
+                },
+                {
+                    "name": "ystart",
+                    "type": "uint32"
+                },
+                {
+                    "name": "yend",
+                    "type": "uint32"
                 },
                 {
                     "name": "qtyretired",
@@ -54,48 +102,64 @@
                     "type": "bool"
                 },
                 {
-                    "name": "issuedate",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "claimdate",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "retiredate",
-                    "type": "time_point_sec"
-                }
-            ]
-        },
-        {
-            "name": "certstats",
-            "base": "",
-            "fields": [
-                {
-                    "name": "orgid",
-                    "type": "uint32"
-                },
-                {
-                    "name": "dateval",
-                    "type": "uint32"
-                },
-                {
-                    "name": "supplystat",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "claimcert",
-            "base": "",
-            "fields": [
-                {
-                    "name": "issuer",
-                    "type": "name"
-                },
-                {
-                    "name": "certn",
+                    "name": "portid",
                     "type": "uint64"
+                },
+                {
+                    "name": "prodid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "crtproduction",
+            "base": "",
+            "fields": [
+                {
+                    "name": "cname",
+                    "type": "string"
+                },
+                {
+                    "name": "exid",
+                    "type": "string"
+                },
+                {
+                    "name": "tpot",
+                    "type": "asset"
+                },
+                {
+                    "name": "tsunk",
+                    "type": "asset"
+                },
+                {
+                    "name": "bsunk",
+                    "type": "bool"
+                },
+                {
+                    "name": "tstart",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "tend",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "scinks",
+                    "type": "uint64[]"
+                }
+            ]
+        },
+        {
+            "name": "csinkcert",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "c",
+                    "type": "cert_csink"
                 }
             ]
         },
@@ -146,6 +210,94 @@
             ]
         },
         {
+            "name": "draftcertcs",
+            "base": "",
+            "fields": [
+                {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
+                    "name": "strid",
+                    "type": "string"
+                },
+                {
+                    "name": "loc",
+                    "type": "uint16"
+                },
+                {
+                    "name": "type",
+                    "type": "string"
+                },
+                {
+                    "name": "desc",
+                    "type": "string"
+                },
+                {
+                    "name": "gross",
+                    "type": "asset"
+                },
+                {
+                    "name": "humidity",
+                    "type": "asset"
+                },
+                {
+                    "name": "tmin",
+                    "type": "asset"
+                },
+                {
+                    "name": "tmax",
+                    "type": "asset"
+                },
+                {
+                    "name": "tavg",
+                    "type": "asset"
+                },
+                {
+                    "name": "ystart",
+                    "type": "uint32"
+                },
+                {
+                    "name": "yend",
+                    "type": "uint32"
+                },
+                {
+                    "name": "portid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "prodid",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "draftcertpr",
+            "base": "",
+            "fields": [
+                {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
+                    "name": "strid",
+                    "type": "string"
+                },
+                {
+                    "name": "cname",
+                    "type": "string"
+                },
+                {
+                    "name": "exid",
+                    "type": "string"
+                },
+                {
+                    "name": "tpot",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
             "name": "draw",
             "base": "",
             "fields": [
@@ -174,24 +326,6 @@
             ]
         },
         {
-            "name": "issuecert",
-            "base": "",
-            "fields": [
-                {
-                    "name": "issuer",
-                    "type": "name"
-                },
-                {
-                    "name": "certid",
-                    "type": "string"
-                },
-                {
-                    "name": "supply",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
             "name": "orgs",
             "base": "",
             "fields": [
@@ -210,64 +344,16 @@
             ]
         },
         {
-            "name": "retiredcert",
+            "name": "prodcert",
             "base": "",
             "fields": [
                 {
-                    "name": "certnum",
+                    "name": "id",
                     "type": "uint64"
                 },
                 {
-                    "name": "certid",
-                    "type": "string"
-                },
-                {
-                    "name": "qtyretired",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "retirefunds",
-            "base": "",
-            "fields": [
-                {
-                    "name": "sender",
-                    "type": "name"
-                },
-                {
-                    "name": "supply",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
-            "name": "retirements",
-            "base": "",
-            "fields": [
-                {
-                    "name": "retirenum",
-                    "type": "uint64"
-                },
-                {
-                    "name": "orgid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "account",
-                    "type": "name"
-                },
-                {
-                    "name": "supplyret",
-                    "type": "asset"
-                },
-                {
-                    "name": "certs",
-                    "type": "retiredcert[]"
-                },
-                {
-                    "name": "retiredate",
-                    "type": "time_point_sec"
+                    "name": "c",
+                    "type": "cert_production"
                 }
             ]
         },
@@ -308,6 +394,74 @@
                 {
                     "name": "orgname",
                     "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "strctapproval",
+            "base": "",
+            "fields": [
+                {
+                    "name": "approver",
+                    "type": "name"
+                },
+                {
+                    "name": "level",
+                    "type": "uint8"
+                },
+                {
+                    "name": "orgid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "tstamp",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "strctheader",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "strid",
+                    "type": "string"
+                },
+                {
+                    "name": "type",
+                    "type": "name"
+                },
+                {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
+                    "name": "orgid",
+                    "type": "uint64"
+                },
+                {
+                    "name": "status",
+                    "type": "uint8"
+                },
+                {
+                    "name": "draftdate",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "submitdate",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "approvedate",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "approvals",
+                    "type": "strctapproval[]"
                 }
             ]
         },
@@ -407,11 +561,6 @@
     ],
     "actions": [
         {
-            "name": "claimcert",
-            "type": "claimcert",
-            "ricardian_contract": ""
-        },
-        {
             "name": "delauthlevel",
             "type": "delauthlevel",
             "ricardian_contract": ""
@@ -422,18 +571,18 @@
             "ricardian_contract": ""
         },
         {
+            "name": "draftcertcs",
+            "type": "draftcertcs",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "draftcertpr",
+            "type": "draftcertpr",
+            "ricardian_contract": ""
+        },
+        {
             "name": "draw",
             "type": "draw",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "issuecert",
-            "type": "issuecert",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "retirefunds",
-            "type": "retirefunds",
             "ricardian_contract": ""
         },
         {
@@ -491,8 +640,8 @@
             "key_types": []
         },
         {
-            "name": "certificates",
-            "type": "certificate",
+            "name": "csinks",
+            "type": "csinkcert",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -512,13 +661,6 @@
             "key_types": []
         },
         {
-            "name": "issuestat",
-            "type": "certstats",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
             "name": "orgregister",
             "type": "orgs",
             "index_type": "i64",
@@ -526,15 +668,8 @@
             "key_types": []
         },
         {
-            "name": "retired",
-            "type": "retirements",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "retirestat",
-            "type": "certstats",
+            "name": "production",
+            "type": "prodcert",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

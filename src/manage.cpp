@@ -51,6 +51,18 @@ ACTION carboncert::sysdefaults() {
         setglobalint(name("certcount"), 0);
     }
 
+    if(getglobalint(name("pcertcount")) == 0) 
+    {
+        delglobal(name("pcertcount"));
+        setglobalint(name("pcertcount"), 0);
+    }
+
+    if(getglobalint(name("csinkcount")) == 0) 
+    {
+        delglobal(name("csinkcount"));
+        setglobalint(name("csinkcount"), 0);
+    }
+
     if(getglobalint(name("retirecount")) == 0) 
     {
         delglobal(name("retirecount"));

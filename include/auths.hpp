@@ -2,9 +2,9 @@
 
     ACTION setauthlevel(const name& authuser, const name& user, const uint8_t& level, const uint64_t& org);
 
-    ACTION setorg(const name& authuser, const uint64_t& orgid, const string& orgname);
-
     ACTION delauthlevel(const name& authuser, const name& user);
+
+    ACTION setorg(const name& authuser, const uint64_t& orgid, const string& orgname);
 
     ACTION delorg(const name& authuser, const uint64_t& orgid);
     
@@ -13,7 +13,8 @@
     void min_org_auth(const name& user, const uint8_t& level);
     void has_org_auth(const name& user, const uint8_t& level);
     uint8_t get_org_auth(const name& user);
-    uint64_t getorgid(const name& user);
+    uint64_t get_org_id(const name& user);
+    tuple<name, uint8_t, uint64_t> get_auth_row(const name& user);
 
     TABLE auths {
       name      user;    //user account
