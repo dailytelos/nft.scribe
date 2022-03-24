@@ -45,36 +45,6 @@ ACTION carboncert::sysdefaults() {
         setglobalint(name("depositacct"), 0);
     }
 
-    if(getglobalint(name("certcount")) == 0) 
-    {
-        delglobal(name("certcount"));
-        setglobalint(name("certcount"), 0);
-    }
-
-    if(getglobalint(name("pcertcount")) == 0) 
-    {
-        delglobal(name("pcertcount"));
-        setglobalint(name("pcertcount"), 0);
-    }
-
-    if(getglobalint(name("csinkcount")) == 0) 
-    {
-        delglobal(name("csinkcount"));
-        setglobalint(name("csinkcount"), 0);
-    }
-
-    if(getglobalint(name("retirecount")) == 0) 
-    {
-        delglobal(name("retirecount"));
-        setglobalint(name("retirecount"), 1);
-    }
-
-    if(getglobalint(name("retiredtblct")) == 0) 
-    {
-        delglobal(name("retiredtblct"));
-        setglobalint(name("retiredtblct"), 0);
-    }
-
     if(getglobalint(name("usdval")) == 0) 
     {
         delglobal(name("usdval"));
@@ -87,6 +57,37 @@ ACTION carboncert::sysdefaults() {
         setglobalint(name("sgdval"), 0);
     }
 
+    if(getglobalint(GLOBAL_COUNT_EBC) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_EBC);
+        setglobalint(GLOBAL_COUNT_EBC, 0);
+    }
+
+    if(getglobalint(GLOBAL_COUNT_PRO) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_PRO);
+        setglobalint(GLOBAL_COUNT_PRO, 0);
+    }
+
+    if(getglobalint(GLOBAL_COUNT_SNK) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_SNK);
+        setglobalint(GLOBAL_COUNT_SNK, 0);
+    }
+
+    if(getglobalint(GLOBAL_COUNT_PRT) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_PRT);
+        setglobalint(GLOBAL_COUNT_PRT, 0);
+    }
+
+    if(getglobalint(GLOBAL_COUNT_SND) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_SND);
+        setglobalint(GLOBAL_COUNT_SND, 0);
+    }
+
+    _setorg(ORG_ADMIN_ID, "Administrator");
 }
 
 ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
@@ -131,8 +132,6 @@ ACTION carboncert::sysdeposit(name &user, asset &quant, string &memo) {
 ACTION carboncert::sysdelglobal(name &var) {
     require_auth( get_self() );
     checkfreeze();
-
-    check(var.value != name("certcount").value, "Variable 'certcount' must not be modified.");
 
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);

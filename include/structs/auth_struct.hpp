@@ -48,6 +48,8 @@ struct strctheader {
     time_point_sec draftdate;  //when drafted in the system
     time_point_sec submitdate; //when submitted in the system
     time_point_sec approvedate; //when cert becomes active due to final approval / authorisation
+    time_point_sec deletedate; //when it was deleted
+    time_point_sec lockdate;  //when it was locked
 
     vector<carboncert::strctapproval> approvals;  //records approvals as they occur
 
@@ -73,12 +75,41 @@ struct strctheader {
         draftdate = i_draftdate;
     };
 
-    void add_approval(carboncert::strctapproval &approval) {
-        check(approval.orgid == orgid, "Approval does not belong to the same organisation. ");
-        check(approval.status > status, "Approval is identical or less than current authorisation. ");
+    void add_approval(carboncert::strctapproval &approval, string appr_type) {
+
+        uint8_t nStatus = approval.status;
+
+            if(appr_type == "draft") {
+                nStatus = 40;
+                draftdate = time_point_sec(current_time_point().sec_since_epoch());
+            } else if (appr_type == "submit") {
+                nStatus = 41;
+                submitdate = time_point_sec(current_time_point().sec_since_epoch());
+            } else if (appr_type == "approve") {
+                approvedate = time_point_sec(current_time_point().sec_since_epoch());
+            } else if (appr_type == "del.status") {
+                deletedate = time_point_sec(current_time_point().sec_since_epoch());
+            } else {
+                check(false, "Invalid appr_type in add_approval. ");
+            }
+
+        if(approval.status < 200) {
+            check(approval.orgid == orgid, "Approval from orgid does not match header data orgid. ");
+            
+            if (appr_type == "approve") {
+                nStatus = 61;
+            }
+        }
+
+        if(status == 4) {
+            check(false, "Entries flagged for deletion may not be updated further. ");
+        }
+
+        check(nStatus > status, "Approval is identical or less than current authorisation. ");
+
         approvals.push_back(approval);
-        status = approval.status;
+        status = nStatus;
     };
 
-    EOSLIB_SERIALIZE(strctheader, (id)(strid)(type)(creator)(orgid)(status)(draftdate)(submitdate)(approvedate)(approvals));
+    EOSLIB_SERIALIZE(strctheader, (id)(strid)(type)(creator)(orgid)(status)(draftdate)(submitdate)(approvedate)(deletedate)(lockdate)(approvals));
 };

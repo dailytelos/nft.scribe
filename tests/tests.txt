@@ -1,0 +1,9 @@
+datadraft - ebc
+user
+cert.ebc
+ABC-1234
+s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|n_tissue|25325232|n_texpire|253252352
+|
+0
+0
+

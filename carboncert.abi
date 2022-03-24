@@ -4,34 +4,6 @@
     "types": [],
     "structs": [
         {
-            "name": "approvecsink",
-            "base": "",
-            "fields": [
-                {
-                    "name": "approver",
-                    "type": "name"
-                },
-                {
-                    "name": "id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "approveprod",
-            "base": "",
-            "fields": [
-                {
-                    "name": "approver",
-                    "type": "name"
-                },
-                {
-                    "name": "id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "auths",
             "base": "",
             "fields": [
@@ -50,144 +22,58 @@
             ]
         },
         {
-            "name": "cert_csink",
+            "name": "datadraft",
             "base": "",
             "fields": [
                 {
-                    "name": "header",
-                    "type": "strctheader"
-                },
-                {
-                    "name": "data",
-                    "type": "crtcsink"
-                }
-            ]
-        },
-        {
-            "name": "cert_production",
-            "base": "",
-            "fields": [
-                {
-                    "name": "header",
-                    "type": "strctheader"
-                },
-                {
-                    "name": "data",
-                    "type": "crtproduction"
-                }
-            ]
-        },
-        {
-            "name": "crtcsink",
-            "base": "",
-            "fields": [
-                {
-                    "name": "loc",
-                    "type": "uint16"
+                    "name": "creator",
+                    "type": "name"
                 },
                 {
                     "name": "type",
+                    "type": "name"
+                },
+                {
+                    "name": "strid",
                     "type": "string"
                 },
                 {
-                    "name": "desc",
+                    "name": "data",
                     "type": "string"
                 },
                 {
-                    "name": "gross",
-                    "type": "asset"
+                    "name": "token",
+                    "type": "string"
                 },
                 {
-                    "name": "humidity",
-                    "type": "asset"
+                    "name": "edit",
+                    "type": "uint8"
                 },
                 {
-                    "name": "tmin",
-                    "type": "asset"
-                },
-                {
-                    "name": "tmax",
-                    "type": "asset"
-                },
-                {
-                    "name": "tavg",
-                    "type": "asset"
-                },
-                {
-                    "name": "ystart",
-                    "type": "uint32"
-                },
-                {
-                    "name": "yend",
-                    "type": "uint32"
-                },
-                {
-                    "name": "qtyretired",
-                    "type": "asset"
-                },
-                {
-                    "name": "retired",
-                    "type": "bool"
-                },
-                {
-                    "name": "portid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "prodid",
+                    "name": "id",
                     "type": "uint64"
                 }
             ]
         },
         {
-            "name": "crtproduction",
+            "name": "datasubmit",
             "base": "",
             "fields": [
                 {
-                    "name": "cname",
-                    "type": "string"
+                    "name": "approver",
+                    "type": "name"
                 },
                 {
-                    "name": "exid",
-                    "type": "string"
+                    "name": "type",
+                    "type": "name"
                 },
-                {
-                    "name": "tpot",
-                    "type": "asset"
-                },
-                {
-                    "name": "tsunk",
-                    "type": "asset"
-                },
-                {
-                    "name": "bsunk",
-                    "type": "bool"
-                },
-                {
-                    "name": "tstart",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "tend",
-                    "type": "time_point_sec"
-                },
-                {
-                    "name": "scinks",
-                    "type": "uint64[]"
-                }
-            ]
-        },
-        {
-            "name": "csinkcert",
-            "base": "",
-            "fields": [
                 {
                     "name": "id",
                     "type": "uint64"
                 },
                 {
-                    "name": "c",
-                    "type": "cert_csink"
+                    "name": "appr_type",
+                    "type": "string"
                 }
             ]
         },
@@ -238,94 +124,6 @@
             ]
         },
         {
-            "name": "draftcertcs",
-            "base": "",
-            "fields": [
-                {
-                    "name": "creator",
-                    "type": "name"
-                },
-                {
-                    "name": "strid",
-                    "type": "string"
-                },
-                {
-                    "name": "loc",
-                    "type": "uint16"
-                },
-                {
-                    "name": "type",
-                    "type": "string"
-                },
-                {
-                    "name": "desc",
-                    "type": "string"
-                },
-                {
-                    "name": "gross",
-                    "type": "asset"
-                },
-                {
-                    "name": "humidity",
-                    "type": "asset"
-                },
-                {
-                    "name": "tmin",
-                    "type": "asset"
-                },
-                {
-                    "name": "tmax",
-                    "type": "asset"
-                },
-                {
-                    "name": "tavg",
-                    "type": "asset"
-                },
-                {
-                    "name": "ystart",
-                    "type": "uint32"
-                },
-                {
-                    "name": "yend",
-                    "type": "uint32"
-                },
-                {
-                    "name": "portid",
-                    "type": "uint64"
-                },
-                {
-                    "name": "prodid",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "draftcertpr",
-            "base": "",
-            "fields": [
-                {
-                    "name": "creator",
-                    "type": "name"
-                },
-                {
-                    "name": "strid",
-                    "type": "string"
-                },
-                {
-                    "name": "cname",
-                    "type": "string"
-                },
-                {
-                    "name": "exid",
-                    "type": "string"
-                },
-                {
-                    "name": "tpot",
-                    "type": "asset"
-                }
-            ]
-        },
-        {
             "name": "draw",
             "base": "",
             "fields": [
@@ -364,24 +162,6 @@
                 {
                     "name": "orgname",
                     "type": "string"
-                },
-                {
-                    "name": "retirenum",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "prodcert",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "c",
-                    "type": "cert_production"
                 }
             ]
         },
@@ -492,8 +272,34 @@
                     "type": "time_point_sec"
                 },
                 {
+                    "name": "deletedate",
+                    "type": "time_point_sec"
+                },
+                {
+                    "name": "lockdate",
+                    "type": "time_point_sec"
+                },
+                {
                     "name": "approvals",
                     "type": "strctapproval[]"
+                }
+            ]
+        },
+        {
+            "name": "struct_data",
+            "base": "",
+            "fields": [
+                {
+                    "name": "header",
+                    "type": "strctheader"
+                },
+                {
+                    "name": "data",
+                    "type": "string"
+                },
+                {
+                    "name": "token",
+                    "type": "string"
                 }
             ]
         },
@@ -589,17 +395,31 @@
                     "type": "string"
                 }
             ]
+        },
+        {
+            "name": "tbldata",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "d",
+                    "type": "struct_data"
+                }
+            ]
         }
     ],
     "actions": [
         {
-            "name": "approvecsink",
-            "type": "approvecsink",
+            "name": "datadraft",
+            "type": "datadraft",
             "ricardian_contract": ""
         },
         {
-            "name": "approveprod",
-            "type": "approveprod",
+            "name": "datasubmit",
+            "type": "datasubmit",
             "ricardian_contract": ""
         },
         {
@@ -610,16 +430,6 @@
         {
             "name": "delorg",
             "type": "delorg",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "draftcertcs",
-            "type": "draftcertcs",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "draftcertpr",
-            "type": "draftcertpr",
             "ricardian_contract": ""
         },
         {
@@ -682,8 +492,8 @@
             "key_types": []
         },
         {
-            "name": "csinks",
-            "type": "csinkcert",
+            "name": "data",
+            "type": "tbldata",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -705,13 +515,6 @@
         {
             "name": "orgregister",
             "type": "orgs",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "production",
-            "type": "prodcert",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

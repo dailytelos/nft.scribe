@@ -3,7 +3,10 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
     checkfreeze();
 
     require_auth(authuser);
-    uint8_t nAuth = get_org_auth(authuser);
+    checkorgexists(org);
+    
+    uint64_t auth_org = get_org_id(authuser);
+    uint8_t nAuth = get_org_auth(authuser, auth_org);
 
     if(authuser.value != get_self().value)
     { check(nAuth > level, "Authuser does not have sufficient permission. "); }
@@ -11,7 +14,7 @@ ACTION carboncert::setauthlevel(const name& authuser, const name& user, const ui
     check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
     
     if(nAuth < AUTH_ADMIN_CORP_ROLES)
-    { check(get_org_id(authuser) == get_org_id(user),"Authuser must belong to the same organisation as user. "); }
+    { check(get_org_id(authuser) == org,"Authuser must belong to the same organisation as user. "); }
 
     check( is_account( user ), "User account does not exist. ");
 
@@ -38,17 +41,20 @@ ACTION carboncert::delauthlevel(const name& authuser, const name& user) {
     checkfreeze();
 
     require_auth(authuser);
-    uint8_t nAuth = get_org_auth(authuser);
-    uint8_t level = get_org_auth(user);
+    uint64_t auth_org = get_org_id(authuser);
+    uint64_t user_org = get_org_id(user);
+
+    uint8_t nAuth = get_org_auth(authuser, auth_org);
+    uint8_t level = get_org_auth(user, user_org);
+
+    if(nAuth < AUTH_ADMIN_CORP_ROLES)
+    { check(auth_org == user_org,"Authuser must belong to the same organisation as user. "); }
 
     if(authuser.value != get_self().value)
     { check(nAuth > level, "Authuser does not have sufficient permission. "); }
 
     check( (nAuth == AUTH_LEVEL_CORP_ADMIN) || (nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
     
-    if(nAuth < AUTH_ADMIN_CORP_ROLES)
-    { check(get_org_id(authuser) == get_org_id(user),"Authuser must belong to the same organisation as user. "); }
-
     auths_index _auths( get_self(), get_self().value );
     auto auths_itr = _auths.find(user.value);
 
@@ -62,11 +68,63 @@ ACTION carboncert::setorg(const name& authuser, const uint64_t& orgid, const str
     checkfreeze();
 
     require_auth(authuser);
-    uint8_t nAuth = get_org_auth(authuser);
+    uint64_t auth_org = get_org_id(authuser);
+    uint8_t nAuth = get_org_auth(authuser, auth_org);
 
     check(orgid > 10, "Parameter orgid must be set above value 10, below this value are reserved. ");
     check((nAuth == AUTH_ADMIN_CORP_ROLES) || (nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
 
+    _setorg(orgid, orgname);
+}
+
+
+ACTION carboncert::delorg(const name& authuser, const uint64_t& orgid) {
+    checkfreeze();
+
+    require_auth(authuser);
+    uint64_t auth_org = get_org_id(authuser);
+    uint8_t nAuth = get_org_auth(authuser, auth_org);
+
+    check(orgid > 10, "Parameter orgid must be set above value 10, below this value are reserved. ");
+    check((nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
+
+    orgs_index _orgs( get_self(), get_self().value );
+    auto orgs_itr = _orgs.find(orgid);
+
+    check(orgs_itr != _orgs.end(), "Organsiation ID does not exist. ");
+
+	orgs_itr = _orgs.erase( orgs_itr );
+}
+
+/*
+void carboncert::min_org_auth(const name& user, const uint8_t& level) {
+    if(get_self().value == user.value) { //contract itself
+        require_auth(get_self());
+        return;
+    } else {
+        auths_index _auths( get_self(), get_self().value );
+        auto auths_itr = _auths.find(user.value);
+
+        check(auths_itr != _auths.end(), "User auth level does not exist. ");
+        check(auths_itr->level >= level, "User fails to meet minimum authorisation. ");
+    }
+} */
+
+/*
+void carboncert::has_org_auth(const name& user, const uint8_t& level) {
+    if(get_self().value == user.value) { //contract itself
+        require_auth(get_self());
+        return;
+    } else {
+        auths_index _auths( get_self(), get_self().value );
+        auto auths_itr = _auths.find(user.value);
+
+        check(auths_itr != _auths.end(), "User auth level does not exist. ");
+        check(auths_itr->level == level, "User fails to meet required authorisation. ");
+    }
+}*/
+
+void carboncert::_setorg(const uint64_t& orgid, const string& orgname) {
     orgs_index _orgs( get_self(), get_self().value );
     auto orgs_itr = _orgs.find(orgid);
 
@@ -84,68 +142,43 @@ ACTION carboncert::setorg(const name& authuser, const uint64_t& orgid, const str
     }
 }
 
-
-ACTION carboncert::delorg(const name& authuser, const uint64_t& orgid) {
-    checkfreeze();
-
-    require_auth(authuser);
-    uint8_t nAuth = get_org_auth(authuser);
-
-    check((nAuth == AUTH_ADMIN_ADMIN_ROLES) || (nAuth == AUTH_LEVEL_ROOTADMIN), "Authuser does not have sufficient role for action. ");
-
-    orgs_index _orgs( get_self(), get_self().value );
-    auto orgs_itr = _orgs.find(orgid);
-
-    check(orgs_itr != _orgs.end(), "Organsiation ID does not exist. ");
-
-	orgs_itr = _orgs.erase( orgs_itr );
-}
-
-void carboncert::min_org_auth(const name& user, const uint8_t& level) {
+uint8_t carboncert::get_org_auth(const name& user, const uint64_t& orgid) {
     if(get_self().value == user.value) { //contract itself
-        require_auth(get_self());
-        return;
+        return AUTH_LEVEL_ROOTADMIN; //auth applies to all organisations
     } else {
         auths_index _auths( get_self(), get_self().value );
         auto auths_itr = _auths.find(user.value);
 
         check(auths_itr != _auths.end(), "User auth level does not exist. ");
-        check(auths_itr->level >= level, "User fails to meet minimum authorisation. ");
-    }
-}
 
+            orgs_index _orgs( get_self(), get_self().value );
+            auto orgs_itr = _orgs.find(orgid);
 
-void carboncert::has_org_auth(const name& user, const uint8_t& level) {
-    if(get_self().value == user.value) { //contract itself
-        require_auth(get_self());
-        return;
-    } else {
-        auths_index _auths( get_self(), get_self().value );
-        auto auths_itr = _auths.find(user.value);
+            check(orgs_itr != _orgs.end(), "Org ID does not exist. ");
 
-        check(auths_itr != _auths.end(), "User auth level does not exist. ");
-        check(auths_itr->level == level, "User fails to meet required authorisation. ");
-    }
-}
-
-uint8_t carboncert::get_org_auth(const name& user) {
-    if(get_self().value == user.value) { //contract itself
-        return AUTH_LEVEL_ROOTADMIN;
-    } else {
-        auths_index _auths( get_self(), get_self().value );
-        auto auths_itr = _auths.find(user.value);
-
-        check(auths_itr != _auths.end(), "User auth level does not exist. ");
+            if(auths_itr->level < AUTH_ADMIN_CORP_ROLES) { //if specific auth for organisation
+                
+                //check they belong to the specific organisation
+                check(auths_itr->orgid == orgid, "Requested get_org_auth does not match users orgid. ");
+            }
 
         return auths_itr->level;
     }
 }
 
 uint64_t carboncert::get_org_id(const name& user) {
+
     auths_index _auths( get_self(), get_self().value );
     auto auths_itr = _auths.find(user.value);
 
-    check(auths_itr != _auths.end(), "User auth level does not exist. ");
+    if(auths_itr == _auths.end()) {
+        if(user.value == get_self().value) {
+            return ORG_ADMIN_ID;
+        }
+    }
+
+    checkorgexists(auths_itr->orgid);
+
     return auths_itr->orgid;
 }
 
@@ -170,14 +203,14 @@ tuple<name, uint8_t, uint64_t> carboncert::get_auth_row(const name& user) {
 }
 
 
-uint8_t carboncert::get_status_auth(const name& user, const string& activity, const bool& submit, const bool& approve) {
+uint8_t carboncert::get_status_auth(const name& user, const name& activity, const bool& submit, const bool& approve) {
+    bool bCerts = (activity == DATA_TYPE_CERT_EBC) || (activity == DATA_TYPE_CERT_PRO) || (activity == DATA_TYPE_CERT_SNK) || (activity == DATA_TYPE_PORTF);
+    bool bSend  = (activity == DATA_TYPE_ACT_SEND);
 
-    check( (activity == "certs") || (activity == "send"), "Activity specified to get_status_auth is invalid. ");
-    bool bCerts = (activity == "certs");
-    bool bSend  = (activity == "send");
+    check( bCerts || bSend, "Activity specified to get_status_auth is invalid. ");
 
-    uint8_t nAuth = get_org_auth(user);
-
+    uint64_t auth_org = get_org_id(user);
+    uint8_t nAuth = get_org_auth(user, auth_org);
 
     if(bCerts) {
 
@@ -248,32 +281,11 @@ uint8_t carboncert::get_status_auth(const name& user, const string& activity, co
     return STATUS_NONE;
 }
 
-// Higher value equals more authority, 255 being max admin authority, 0 being view authority
-const uint8_t AUTH_LEVEL_VIEWER         = 0;    //very limited
-const uint8_t AUTH_LEVEL_CORP_CERTS     = 41;   //issue / retire certificates authorisation
-const uint8_t AUTH_LEVEL_CORP_SEND      = 51;   //send funds initation
-const uint8_t AUTH_LEVEL_CORP_APPROVE   = 61;   //2nd approver for corporate actions
-const uint8_t AUTH_LEVEL_CORP_ADMIN     = 121;  //user roles assignment
 
-const uint8_t AUTH_ADMIN_CORP_ROLES     = 191;  //user can change / assign user roles for CORPs
-const uint8_t AUTH_ADMIN_CERTS          = 201;  //user can be final approval for certs - bluefield admin
-const uint8_t AUTH_ADMIN_SEND           = 211;  //user can be final approval for send actions -- bluefield admin (ie. large value bridge actions)
-const uint8_t AUTH_ADMIN_APPROVALS      = 215;  //user can be final approval for certs and send actions -- bluefield admin
-const uint8_t AUTH_ADMIN_ADMIN_ROLES    = 221;  //user can change all admin and CORP roles
+void carboncert::checkorgexists(const uint64_t& orgid) {
 
-const uint8_t AUTH_LEVEL_ROOTADMIN      = 255;  //highest administrator level of contract, can assign AUTH_ADMIN_ADMIN_ROLES permission and all other actions
+    orgs_index _orgs( get_self(), get_self().value );
+    auto orgs_itr = _orgs.find(orgid);
 
-
-//CERT STATUS
-const uint8_t STATUS_CERT_NONE            = 0;
-
-const uint8_t STATUS_CERT_DRAFT           = 40;
-const uint8_t STATUS_CERT_SUBMIT          = 41;
-const uint8_t STATUS_CERT_CORP_APPROVED   = 61;
-const uint8_t STATUS_CERT_ADMIN_APPROVED  = 201;
-
-//SEND STATUS
-const uint8_t STATUS_SEND_DRAFT           = 50;
-const uint8_t STATUS_SEND_SUBMIT          = 51;
-const uint8_t STATUS_SEND_CORP_APPROVED   = 61;
-const uint8_t STATUS_SEND_ADMIN_APPROVED  = 211;
+    check(orgs_itr != _orgs.end(), "Org ID does not exist. ");
+}
