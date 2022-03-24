@@ -18,7 +18,7 @@
 
     void checkorgexists(const uint64_t& orgid);
 
-    uint8_t get_status_auth(const name& user, const name& activity, const bool& submit, const bool& approve);
+    uint8_t get_status_auth(const name& user, const name& activity, const bool& submit, const bool& approve, const bool& lockstatus, const bool& delstatus);
 
     TABLE auths {
       name      user;    //user account

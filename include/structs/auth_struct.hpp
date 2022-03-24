@@ -88,7 +88,13 @@ struct strctheader {
             } else if (appr_type == "approve") {
                 approvedate = time_point_sec(current_time_point().sec_since_epoch());
             } else if (appr_type == "del.status") {
+                check(approval.level < 200, "Only an admin may flag data as deleted. ");
+                nStatus = 4;
                 deletedate = time_point_sec(current_time_point().sec_since_epoch());
+            } else if (appr_type == "lock.status") {
+                check(approval.level >= 200, "Only an admin may lock a data entry. ");
+                nStatus = 3;
+                lockdate = time_point_sec(current_time_point().sec_since_epoch());
             } else {
                 check(false, "Invalid appr_type in add_approval. ");
             }
@@ -105,7 +111,9 @@ struct strctheader {
             check(false, "Entries flagged for deletion may not be updated further. ");
         }
 
-        check(nStatus > status, "Approval is identical or less than current authorisation. ");
+        if((appr_type != "lock.status") && (appr_type == "del.status")) {
+            check(nStatus > status, "Approval is identical or less than current authorisation. ");
+        } 
 
         approvals.push_back(approval);
         status = nStatus;

@@ -32,15 +32,17 @@ CONTRACT carboncert : public contract {
     //Activity Types -- pass string as appr_type variable
     const string ACTIVITY_DRAFT         = "draft";
     const string ACTIVITY_SUBMIT        = "submit";
+    const string ACTIVITY_APPROVE       = "approve";
+    const string ACTIVITY_LOCK          = "locked.status";
     const string ACTIVITY_DELETE_STATUS = "del.status";
     const string ACTIVITY_DELETE_TOTAL  = "del.total";  // can be used on drafts to fully delete, otherwise can only be used by admins
                                                         // can not be used on a cert that issued any funds, use "del.status" on that
 
     //vector<string> -- Data Definitions
-    vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","n_tissue","n_texpire"};
+    vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","t_tissue","t_texpire"};
     vector<string> VARDEF_CERT_PROD     = {"n_ebc_certn","a_tpot"};
-    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","a_qtyretired","b_retired"};
-    vector<string> VARDEF_DATA_PORTF    = {"s_title","s_desc","i_img","a_csinks","a_retired"};
+    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","a_qtyretired","n_retired"};
+    vector<string> VARDEF_DATA_PORTF    = {"s_title","s_desc","s_img","a_csinks","a_retired"};
     vector<string> VARDEF_ACT_SEND      = {"s_contract","s_from","s_to","a_qty","s_memo"};
     
     #include "./constants.hpp"

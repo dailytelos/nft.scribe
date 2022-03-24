@@ -100,7 +100,7 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
     auto data_itr = _data_table.find(count);
 
     tuple<name, uint8_t, uint64_t> tplApr = get_auth_row(creator);
-    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get_status_auth(creator, type, false, false), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
+    strctapproval cApprove = strctapproval(creator, get<1>(tplApr), get_status_auth(creator, type, false, false, false, false), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
     
     //update existing data
     if(data_itr == _data_table.end()){
@@ -144,16 +144,30 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
 void carboncert::_datasubmit(const name& approver, const name& type, const uint64_t& id, const string& appr_type) {
 
     check(appr_type != "draft", "Invalid appr_type supplied draft to _datasubmit. ");
+    check( (appr_type == ACTIVITY_SUBMIT) || (appr_type == ACTIVITY_APPROVE) || (appr_type == ACTIVITY_LOCK) || (appr_type == ACTIVITY_DELETE_STATUS) || (appr_type == ACTIVITY_DELETE_TOTAL), "Invalid appr_type supplied when submitting to contract. ");
 
+    // standard row update
     data_index _data_table( get_self(), type.value);
     auto data_itr = _data_table.find(id);
 
     check(data_itr != _data_table.end(), "Contract error, id number does not exist! ");
 
     tuple<name, uint8_t, uint64_t> tplApr = get_auth_row(approver);
-    strctapproval cApprove = strctapproval(approver, get<1>(tplApr), get_status_auth(approver, type, true, (appr_type == "approve")), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
+    strctapproval cApprove = strctapproval(approver, get<1>(tplApr), get_status_auth(approver, type, true, (appr_type == "approve"), (appr_type == "locked.status"), (appr_type == "del.status")), get<2>(tplApr), time_point_sec(current_time_point().sec_since_epoch()));
 
-    _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
-        row.d.header.add_approval(cApprove, appr_type);
-    });
+    if(appr_type == ACTIVITY_DELETE_TOTAL) {
+        //delete row requires system admin or root admin
+        uint8_t orgAuth = get_org_auth(approver, get_org_id(approver));
+        check(orgAuth >= AUTH_ADMIN_APPROVALS, "Failed to meet minimum authorisation to delete record. ");
+
+        //you may only totally delete records that are not yet approved by admin
+        // > 201 applies to certs and sends
+        check(data_itr->d.header.status < STATUS_CERT_ADMIN_APPROVED, "You are unable to delete this record because it was fully approved. ");
+
+        data_itr = _data_table.erase( data_itr );
+    } else {
+        _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
+            row.d.header.add_approval(cApprove, appr_type);
+        });
+    }
 }

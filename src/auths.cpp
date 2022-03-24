@@ -203,7 +203,7 @@ tuple<name, uint8_t, uint64_t> carboncert::get_auth_row(const name& user) {
 }
 
 
-uint8_t carboncert::get_status_auth(const name& user, const name& activity, const bool& submit, const bool& approve) {
+uint8_t carboncert::get_status_auth(const name& user, const name& activity, const bool& submit, const bool& approve, const bool& lockstatus, const bool& delstatus) {
     bool bCerts = (activity == DATA_TYPE_CERT_EBC) || (activity == DATA_TYPE_CERT_PRO) || (activity == DATA_TYPE_CERT_SNK) || (activity == DATA_TYPE_PORTF);
     bool bSend  = (activity == DATA_TYPE_ACT_SEND);
 
@@ -214,7 +214,7 @@ uint8_t carboncert::get_status_auth(const name& user, const name& activity, cons
 
     if(bCerts) {
 
-        if(!submit) {
+        if(!submit) { //draft
             if(nAuth == AUTH_LEVEL_CORP_CERTS) { return STATUS_CERT_DRAFT; }
             if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_DRAFT; }
             if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_DRAFT; }
@@ -224,7 +224,26 @@ uint8_t carboncert::get_status_auth(const name& user, const name& activity, cons
             check(false, "user lacks valid get_status_auth permission. ");
         }
 
-        if(!approve) {
+        if(delstatus) {
+            if(nAuth == AUTH_LEVEL_CORP_CERTS) { return STATUS_CERT_DELETION; } 
+            if(nAuth == AUTH_LEVEL_CORP_APPROVE) { return STATUS_CERT_DELETION; } 
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_DELETION; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(lockstatus) {
+            if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_LOCKED; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_LOCKED; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_LOCKED; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(!approve) { //submit
             if(nAuth == AUTH_LEVEL_CORP_CERTS) { return STATUS_CERT_SUBMIT; }
             if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_SUBMIT; }
             if(nAuth == AUTH_ADMIN_CERTS)      { return STATUS_CERT_SUBMIT; }
@@ -252,6 +271,25 @@ uint8_t carboncert::get_status_auth(const name& user, const name& activity, cons
             if(nAuth == AUTH_ADMIN_SEND)       { return STATUS_SEND_DRAFT; }
             if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_SEND_DRAFT; }
             if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_SEND_DRAFT; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(delstatus) {
+            if(nAuth == AUTH_LEVEL_CORP_SEND) { return STATUS_CERT_DELETION; } 
+            if(nAuth == AUTH_LEVEL_CORP_APPROVE) { return STATUS_CERT_DELETION; } 
+            if(nAuth == AUTH_LEVEL_CORP_ADMIN) { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_ADMIN_SEND)      { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_DELETION; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_DELETION; }
+
+            check(false, "user lacks valid get_status_auth permission. ");
+        }
+
+        if(lockstatus) {
+            if(nAuth == AUTH_ADMIN_SEND)      { return STATUS_CERT_LOCKED; }
+            if(nAuth == AUTH_ADMIN_APPROVALS)  { return STATUS_CERT_LOCKED; }
+            if(nAuth == AUTH_LEVEL_ROOTADMIN)  { return STATUS_CERT_LOCKED; }
 
             check(false, "user lacks valid get_status_auth permission. ");
         }

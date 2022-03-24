@@ -79,7 +79,20 @@ struct struct_data {
 
         for(int i=0; i < asVars.size(); i++) {
             for(int i2=0; i2 < asData.size(); i2 = i2 + 2) {
-                if(asData[i2] == asVars[i]) { nFound++; break; } //found
+                if(asData[i2] == asVars[i]) {
+                    //validate var
+                    string sVType = asData[i2].substr(0, 2);
+                    int64_t nTest;
+                    asset aTest;
+                    time_point_sec tTest;
+                    if(sVType == "s_") {}
+                    else if(sVType == "n_") { nTest = (int64_t) stoi(asData[i2+1]); } //validates integer
+                    else if(sVType == "a_") { aTest = _stoa(asData[i2+1]); } //validates asset
+                    else if(sVType == "t_") { tTest = time_point_sec(time_point::from_iso_string(asData[i2+1])); } //validates ISO time
+                    else { check(false, "Invalid variable format, use s_, a_, n_, or t_.  "); }
+                    nFound++;
+                    break;
+                } //found
             }
         }
 

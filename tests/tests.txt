@@ -2,8 +2,14 @@ datadraft - ebc
 user
 cert.ebc
 ABC-1234
-s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|n_tissue|25325232|n_texpire|253252352
+s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|t_tissue|2022-03-24T01:00:00.000Z|t_texpire|2023-03-24T01:00:00.000Z
 |
 0
 0
 
+2022-03-24T01:00:00.000Z
+
+2023-03-24T01:00:00.000Z
+
+
+{"s_company","s_company_num","s_cert_num","t_tissue","t_texpire"};
