@@ -20,7 +20,7 @@ ACTION carboncert::draftcert(const name& creator, const string& type, const stri
     require_auth(creator);
 
     //check for draftcert auth
-    uint8_t auth = get_org_auth(creator);
+    uint8_t auth = get_auth_by_org(creator);
 
     check( (auth == AUTH_LEVEL_CORP_CERTS) ||
            (auth == AUTH_LEVEL_CORP_ADMIN) ||
@@ -92,7 +92,7 @@ void carboncert::_draftcert_p(const name& creator, const string& strid, const st
     _prodcerts.emplace( get_self(), [&]( auto& cert_row ) {
         cert_row.id = certn;
         cert_row.c  = cert_production(
-                        strctheader(certn, strid, name("production"), creator, getorgid(creator), STATUS_CERT_DRAFT),
+                        struct_data(certn, strid, name("production"), creator, getorgid(creator), STATUS_CERT_DRAFT),
                         crtproduction(cname, exid, tpot)
                       );
 

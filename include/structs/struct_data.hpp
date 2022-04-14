@@ -1,14 +1,14 @@
 
 struct struct_data {
 
-    carboncert::strctheader header;
+    carboncert::struct_header header;
     std::string data;
     std::string token;
 
     struct_data() {};
 
-    struct_data(carboncert::strctheader i_header, std::string i_data, std::string i_token) {
-        check(i_data.size() <= 12000, "Data supplied to struct_data exceeds 12,000 characters. ");
+    struct_data(carboncert::struct_header i_header, std::string i_data, std::string i_token) {
+        check(i_data.size() <= 12000, "Data supplied to struct_header exceeds 12,000 characters. ");
 
         header = i_header;
         data   = i_data;
@@ -149,15 +149,15 @@ struct struct_data {
         }
     }
 
-    int64_t get_var_as_int(std::string sVarName) {
+    const int64_t get_var_as_int(std::string sVarName) {
         return (int64_t) stoi(get_var(sVarName));
     }
 
-    time_point_sec get_var_as_time(std::string sVarName) {
+    const time_point_sec get_var_as_time(std::string sVarName) {
         return time_point_sec(time_point::from_iso_string(get_var(sVarName)));
     }
 
-    asset get_var_as_asset(std::string sVarName) {
+    const asset get_var_as_asset(std::string sVarName) {
         return _stoa(get_var(sVarName));
     }
 

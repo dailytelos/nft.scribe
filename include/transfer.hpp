@@ -23,7 +23,7 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
         
         checkfreeze();
 
-        string sMemo = "retire credits on deposit";
+        string sMemo = to.to_string() + " deposited " + quant.to_string() + " for future retirement. ";
 
         //code to retire a certificate by issuer/cert#
         adddeposit(from, quant, sMemo);

@@ -33,6 +33,18 @@ ACTION carboncert::sysdefaults() {
     delglobal(name("freeze"));
     setglobalint(name("freeze"), 0);
 
+    if(getglobalint(name("issuecertn")) == 0) 
+    {
+        delglobal(name("issuecertn"));
+        setglobalint(name("issuecertn"), 0);
+    }
+
+    if(getglobalint(name("retirecertn")) == 0) 
+    {
+        delglobal(name("retirecertn"));
+        setglobalint(name("retirecertn"), 0);
+    }
+
     if(getglobalint(name("issuefeettl")) == 0) 
     {
         delglobal(name("issuefeettl"));
@@ -87,7 +99,7 @@ ACTION carboncert::sysdefaults() {
         setglobalint(GLOBAL_COUNT_SND, 0);
     }
 
-    _setorg(ORG_ADMIN_ID, "Administrator");
+    setorg(get_self(), ORG_ADMIN_ID, "Administrator", 1, 1, 1);
 }
 
 ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
