@@ -785,6 +785,8 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
     asset aCSink = cCsink.get_var_as_asset("a_gross");
     asset aTokenIssue = asset(aCSink.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
 
+    sMemo = sMemo + " Claimed: " + aTokenIssue.to_string();
+
     //transfer
     action(
         permission_level{ getcontract(), "active"_n},
@@ -797,5 +799,4 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
             sMemo
         )
     ).send();
-
 }

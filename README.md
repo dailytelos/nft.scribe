@@ -6,11 +6,13 @@ REDESIGN
 NEW PROCESS
 -----------
 
-EBC Draft--->EBC Submit-->EBC Admin Appr-->Production Draft/Submit-->Supplier Levy-->Producer Appr-->Admin Appr-->**Issue Credits**-->Claim Credits
+DONE: EBC Draft--->EBC Submit-->EBC Admin Appr-->Production Draft/Submit-->Supplier Levy-->Producer Appr-->Admin Appr-->Issue Credits-->Claim Credits
 
-Bridge Out Send-->Bridge Admin Appr-->BRIDGE ACTIVITY
+**Bridge Out Send**-->Bridge Admin Appr-->BRIDGE ACTIVITY
 
 Retire Credits Draft/Submit-->Admin Appr
+
+Send->Resolve_Send
 
 -----------
 
