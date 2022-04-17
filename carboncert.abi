@@ -218,6 +218,20 @@
             ]
         },
         {
+            "name": "retire",
+            "base": "",
+            "fields": [
+                {
+                    "name": "approver",
+                    "type": "name"
+                },
+                {
+                    "name": "quant",
+                    "type": "asset"
+                }
+            ]
+        },
+        {
             "name": "setauthlevel",
             "base": "",
             "fields": [
@@ -509,6 +523,11 @@
         {
             "name": "execute",
             "type": "execute",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "retire",
+            "type": "retire",
             "ricardian_contract": ""
         },
         {

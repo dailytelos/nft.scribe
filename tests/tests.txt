@@ -13,3 +13,10 @@ s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|t_
 
 
 {"s_company","s_company_num","s_cert_num","t_tissue","t_texpire"};
+
+
+"n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"
+
+
+"n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"
+

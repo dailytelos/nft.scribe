@@ -12,7 +12,7 @@ DONE: EBC Draft--->EBC Submit-->EBC Admin Appr-->Production Draft/Submit-->Suppl
 
 Retire Credits Draft/Submit-->Admin Appr
 
-Send->Resolve_Send
+DONE: Send->Resolve_Send
 
 -----------
 

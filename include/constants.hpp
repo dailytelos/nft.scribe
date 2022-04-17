@@ -1,18 +1,21 @@
     // DATA Types for tbldata.d.header.type
-    const name DATA_TYPE_CERT_EBC = name("cert.ebc");
-    const name DATA_TYPE_CERT_PRO = name("cert.prod");
-    const name DATA_TYPE_CERT_SNK = name("cert.csink");
-    const name DATA_TYPE_PORTF    = name("portfolio");
-    const name DATA_TYPE_ACT_SEND = name("action.send");
+    const name DATA_TYPE_CERT_EBC  = name("cert.ebc");
+    const name DATA_TYPE_CERT_PRO  = name("cert.prod");
+    const name DATA_TYPE_CERT_SNK  = name("cert.csink");
+    const name DATA_TYPE_CERT_SNKI = name("cert.csink.is");
+    const name DATA_TYPE_PORTF     = name("portfolio");
+    const name DATA_TYPE_ACT_SEND  = name("action.send");
+    const name DATA_TYPE_ACT_RETR  = name("action.retire");
 
 
     //certn counting vars to count certificates (globals)
     const name GLOBAL_COUNT_EBC     = name("certn.ebc");
     const name GLOBAL_COUNT_PRO     = name("certn.prod");
     const name GLOBAL_COUNT_SNK     = name("certn.csink");
-    const name GLOBAL_COUNT_ISS     = name("certn.issued");
+    const name GLOBAL_COUNT_SNKI    = name("certn.csinki");
     const name GLOBAL_COUNT_PRT     = name("portfolio");
     const name GLOBAL_COUNT_SND     = name("count.send");
+    const name GLOBAL_COUNT_RET     = name("count.retire");
 
 
 

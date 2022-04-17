@@ -87,6 +87,12 @@ ACTION carboncert::sysdefaults() {
         setglobalint(GLOBAL_COUNT_SNK, 0);
     }
 
+    if(getglobalint(GLOBAL_COUNT_SNKI) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_SNKI);
+        setglobalint(GLOBAL_COUNT_SNKI, 0);
+    }
+
     if(getglobalint(GLOBAL_COUNT_PRT) == 0) 
     {
         delglobal(GLOBAL_COUNT_PRT);
@@ -348,7 +354,7 @@ void carboncert::adddeposit(name &user, asset &quant, string &memo) {
 }
 
 
-void carboncert::subdeposit(name &user, asset &quant, string &memo) {
+void carboncert::subdeposit(name &user, asset &quant) {
 
     int64_t nAmt = quant.amount;
     symbol_code cUnit = quant.symbol.code();
@@ -358,7 +364,7 @@ void carboncert::subdeposit(name &user, asset &quant, string &memo) {
     check(nAmt > 0, "Amount in quant must be greater than 0. ");
     check(sUnit == getglobalstr(name("tokensymbol")), "Contract presently only works with " + getglobalstr(name("tokensymbol")) + " token. ");
     check(nPrec == getglobalint(name("tokenprec")), "Precision error in given value quant. ");
-    check(memo.size() <= 220, "Memo is too large, limit of 220 characters for adddeposit(...). ");
+    //check(memo.size() <= 220, "Memo is too large, limit of 220 characters for adddeposit(...). ");
 
     deposits_index _deposits( get_self(), get_self().value );
     auto itr = _deposits.find(user.value);
@@ -371,7 +377,7 @@ void carboncert::subdeposit(name &user, asset &quant, string &memo) {
         _deposits.modify( itr, get_self(), [&]( auto& deposit_row ) {
             int64_t new_amount = deposit_row.quant.amount - nAmt;
             deposit_row.quant.amount = new_amount;
-            deposit_row.memo = "*Multiple* - Last Tran: " + memo;
+            //deposit_row.memo = "*Multiple* - Last Tran: " + memo;
             check((getglobalint(name("depositacct")) - nAmt) > 0, "Unable to modify deposits, depositacct fell to 0. ");
             uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) - nAmt;
             setglobalint(name("depositacct"), depositacct);

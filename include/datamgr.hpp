@@ -2,14 +2,14 @@
 
   public:
 
-
-
     //vector<string> -- Data Definitions
     vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","t_issue","t_expire"};
     vector<string> VARDEF_CERT_PROD     = {"s_title","n_ebc_certn","a_tproduced","a_tissued"};
-    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_CERT_CSNK_ISS = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
     vector<string> VARDEF_DATA_PORTF    = {"s_title","s_desc","s_img","a_csinks","a_retired"};
-    vector<string> VARDEF_ACT_SEND      = {"s_contract","s_from","s_to","a_qty","s_memo"};
+    vector<string> VARDEF_ACT_SEND      = {"s_from","s_to","a_qty","s_memo"};
+    vector<string> VARDEF_ACT_RETIRE    = {"a_retired","s_data"};
 
   // Intitial Data Creation
   ACTION datadraft(const name& creator, const name& type, const string& strid, const string& data, const string& token, const uint8_t& edit, uint64_t& id);
@@ -21,6 +21,8 @@
   ACTION execute(const name& approver, const name& type, const uint64_t& id);
 
   ACTION claim(const name& approver, const name& type, const uint64_t& id);
+
+  ACTION retire(const name& approver, const asset& quant);
 
   // issued on c-sink
   //ACTION issuecredits(const name& approver, const uint64_t& id);
@@ -40,6 +42,8 @@
   void _execute(const name& approver, const name& type, const uint64_t& id);
 
   void _claim(const name& approver, const name& type, const uint64_t& id);
+
+  void _retire(const name& approver, const asset& quant);
   
 /*
   void isebccertvalid(const uint64_t& certid);

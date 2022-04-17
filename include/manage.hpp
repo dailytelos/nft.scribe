@@ -25,7 +25,7 @@ void delglobal(name var);
 name getcontract();
 name getorgcontract();
 void adddeposit(name &user, asset &quant, string &memo);
-void subdeposit(name &user, asset &quant, string &memo);
+void subdeposit(name &user, asset &quant);
 void deldeposit(name &user);
 asset getdepamt(name &user);
 string getdepmemo(name &user);

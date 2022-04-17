@@ -149,6 +149,19 @@ ACTION carboncert::claim(const name& approver, const name& type, const uint64_t&
     _claim(approver, type, id);
 }
 
+ACTION carboncert::retire(const name& approver, const asset& quant) {
+    checkfreeze();
+    require_auth(approver);
+
+    //check for datasubmit auth
+    uint64_t auth_org = get_org_id(approver);
+    uint8_t auth = get_auth_by_org(approver, auth_org);
+
+    check(auth >= AUTH_LEVEL_CORP_ADMIN, "You lack the required authority to perform the retire action. ");
+
+    _retire(approver, quant);
+}
+
 
 // csinkclaim(const name& approver, const uint64_t& id)
 //   Allows 
@@ -230,6 +243,9 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
     } else if (type.value == DATA_TYPE_ACT_SEND.value) {
         countvar = GLOBAL_COUNT_SND;
         verify = VARDEF_ACT_SEND;
+    } else if (type.value == GLOBAL_COUNT_RET.value) {
+        countvar = GLOBAL_COUNT_RET;
+        verify = VARDEF_ACT_SEND;
     } else { check(false, "Specified type for draft is invalid. "); }
 
     uint64_t count = (edit == 1) ? id : getglobalint(countvar) + 1;
@@ -283,6 +299,11 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
             print(sMemo);
         });
     }
+
+    if(type == DATA_TYPE_ACT_SEND) {
+        struct_data cData = data_itr->d;
+        _check_send_from(creator, name(cData.get_var("s_from")));
+    }
 }
 
 
@@ -335,8 +356,8 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
                 row.d.set_var("a_tissued","0.0000 T");
             } else if (type.value == DATA_TYPE_CERT_SNK.value) {
                 row.d.set_var("n_claimed","0");
-                row.d.set_var("n_retired","0");
                 row.d.set_var("a_qtyretired","0.0000 T");
+                row.d.set_var("n_retired","0");
             } else if (type.value == DATA_TYPE_PORTF.value) {
                 row.d.set_var("a_csinks","0.0000 T");
                 row.d.set_var("a_retired","0.0000 T");
@@ -353,6 +374,11 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
             sMemo = "Data type " + type.to_string() + " #" + to_string(count) + "  was submitted by " + approver.to_string() + " (strid: " + row.d.header.strid + ")";
             print(sMemo);
         });
+    }
+
+    if(type == DATA_TYPE_ACT_SEND) {
+        struct_data cData = data_itr->d;
+        _check_send_from(approver, name(cData.get_var("s_from")));
     }
 }
 
@@ -728,9 +754,51 @@ void carboncert::_execute(const name& approver, const name& type, const uint64_t
     }
     
     if (type.value == DATA_TYPE_CERT_SNK.value) {
-
+        
         //update production cert for cSink
         _csink_apply_prod(id);
+
+        //generate new CSINK_ISS
+        name countvar_ci = GLOBAL_COUNT_SNKI;
+        vector<string> verify_ci = VARDEF_CERT_CSNK_ISS;
+
+        uint64_t count_ci = getglobalint(countvar_ci) + 1;
+    
+        data_index _data_table_ci( get_self(), DATA_TYPE_CERT_SNKI.value );
+        auto data_itr_ci = _data_table_ci.find(count_ci);
+
+        struct_data sData_CI = data_itr->d;
+
+        _data_table_ci.emplace( get_self(), [&]( auto& row ) {
+            row.id = count_ci;
+            row.d  = sData_CI;
+
+            row.d.is_data_valid(verify_ci);
+        
+            sMemo = "C-Sink " + DATA_TYPE_CERT_SNKI.to_string() + " #" + to_string(count_ci) + "  was finalized and issued by " + approver.to_string() + " (strid: " + row.d.header.strid + ")";
+            print(sMemo);
+        });
+
+        setglobalint(countvar_ci, count_ci);
+    
+    } else if(type.value == DATA_TYPE_ACT_SEND.value) {
+
+        struct_data cData = data_itr->d;
+        _check_send_from(approver, name(cData.get_var("s_from")));
+        
+        //transfer
+        action(
+            permission_level{ getcontract(), "active"_n},
+            getcontract(),
+            "transfer"_n,
+            std::make_tuple(
+                name(cData.get_var("s_from")),
+                name(cData.get_var("s_to")),
+                cData.get_var_as_asset("a_qty"),
+                cData.get_var("s_memo")
+            )
+        ).send();
+    } else {
     }
 
     //add functions to datamgr for csink ---   .csink_issue()  and for producer   .csink_issue() verison
@@ -796,6 +864,143 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
             getcontract(),
             approver,
             aTokenIssue,
+            sMemo
+        )
+    ).send();
+}
+
+
+//send token to deposit in this contract
+void carboncert::_retire(const name& approver, const asset& quant) {
+
+    bool bAllRetired = false;
+
+    name countvar         = name_null;
+    vector<string> verify = {};
+   
+    countvar = GLOBAL_COUNT_SNKI;
+    verify   = VARDEF_CERT_CSNK_ISS;
+
+    uint64_t count = getglobalint(countvar);
+
+    data_index _data_table( get_self(), DATA_TYPE_CERT_SNKI.value );
+    auto data_itr = _data_table.find(count);
+
+    //while loop to reduce DATA_TYPE_CERT_SNKI
+    asset aRetireRemain = quant;
+    string sData_Ret = "";
+
+    while(!bAllRetired) {
+        //decrement csink amount
+
+            asset aRetired;
+            asset aRetiredNew;
+            asset aAvg;
+            int64_t nCertRemain;
+
+            asset aCertRemain;
+            int64_t nQtyRetired;
+
+        _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
+
+            row.d.is_data_valid(verify);
+
+            aRetired      = row.d.get_var_as_asset("a_qtyretired");
+            aRetiredNew   = aRetired;
+            aAvg          = row.d.get_var_as_asset("a_tavg");
+            nCertRemain   = (aAvg.amount - aRetired.amount);
+            nQtyRetired = 0;
+
+
+            if((aRetireRemain.amount - nCertRemain) > 0) {
+                nQtyRetired = nCertRemain;
+                aCertRemain = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                aRetiredNew = aAvg;
+                row.d.set_var("n_retired","1");
+                aRetireRemain = asset(aRetireRemain.amount - nCertRemain, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                count++;
+                setglobalint(countvar, count);
+                data_itr = _data_table.find(count);
+            } else if ((aRetireRemain.amount - nCertRemain) == 0) {
+                nQtyRetired = nCertRemain;
+                aCertRemain = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                aRetiredNew = aAvg;
+                row.d.set_var("n_retired","1");
+                aRetireRemain = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                count++;
+                setglobalint(countvar, count);
+                data_itr = _data_table.find(count);
+                bAllRetired = true;
+            } else {
+                nQtyRetired = aRetireRemain.amount;
+                aCertRemain = asset(nCertRemain - aRetireRemain.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                aRetiredNew = asset(aRetired.amount + aRetireRemain.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                aRetireRemain = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                bAllRetired = true;
+            }
+
+            row.d.set_var("a_qtyretired",aRetiredNew.to_string());
+
+            sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("n_prod_certn") + "*";
+    
+        });
+    }
+
+    //updates retirement count tracker
+    setglobalint(countvar, count);
+
+    sData_Ret = chop(sData_Ret);
+
+    //emplace new retirement
+        name countvar_ret         = name_null;
+        vector<string> verify_ret = {};
+    
+        countvar_ret = GLOBAL_COUNT_RET;
+        verify_ret   = VARDEF_ACT_RETIRE;
+
+        uint64_t count_ret = getglobalint(countvar_ret) + 1;
+
+        data_index _data_table_ret( get_self(), DATA_TYPE_ACT_RETR.value );
+        auto data_itr_ret = _data_table_ret.find(count_ret);
+
+        check(data_itr_ret != _data_table_ret.end(), "Retirement error, contact administrator. ");
+
+        string sSTRID = "";
+        string sDataRow = "a_retired|" + quant.to_string() + "|s_data|" + sData_Ret;
+        string sToken = "|";
+
+        uint64_t auth_org = get_org_id(approver);
+        uint8_t auth = get_auth_by_org(approver, auth_org);
+
+        _data_table_ret.emplace( get_self(), [&]( auto& row ) {
+            row.id = count_ret;
+            row.d  = struct_data(
+                        struct_header(count_ret, sSTRID, DATA_TYPE_ACT_RETR, approver, auth_org, STATUS_DATA_EXECUTED),
+                        sDataRow,
+                        sToken
+                   );
+
+            row.d.is_data_valid(verify);
+        });
+
+        setglobalint(countvar_ret, count_ret);
+
+    //destroy token from deposited funds
+    name depositor = approver;
+    asset reduce = quant;
+    subdeposit(depositor, reduce);
+
+    string sMemo = "Sent " + quant.to_string() + " to token contract (" + getcontract().to_string() + ") for retirement of credits. ";
+
+    //send amount off to COXC to later retire
+    action(
+        permission_level{ getcontract(), "active"_n},
+        getcontract(),
+        "transfer"_n,
+        std::make_tuple(
+            get_self(),
+            getcontract(),
+            quant,
             sMemo
         )
     ).send();
