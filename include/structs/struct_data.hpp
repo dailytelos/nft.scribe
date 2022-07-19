@@ -37,27 +37,38 @@ struct struct_data {
         return s.substr(0, s.size()-1);
     }
 
+    bool _is_digits(const std::string &str) {
+        return str.find_first_not_of("0123456789") == std::string::npos;
+    }
+
     //for internal conversion of string to asset
     asset _stoa(string s) {
+        
         vector<string> data = _split(s, " ");
-        check(data.size() == 2, "Improper data sent to stoa(s). ");
+        /*if(data.size() != 2) {
+            check(false, "S-out: '" + s + "'" + " size: " + to_string(data.size()));
+        }*/
+
+        check(data.size() == 2, "Improper data sent to stoa(s) - line 47. ");
         string sSC = data[1];
         symbol_code sc = symbol_code(sSC);
-        check(sc.to_string().size() >= 1, "Improper data sent to stoa(s). ");
+        check(sc.to_string().size() >= 1, "Improper data sent to stoa(s) - line 50. ");
         vector<string> amount = _split(data[0], ".");
 
         string sAmount = "";
         uint8_t precision = 0;
 
-        if(amount.size() == 1) { // precision is 0
+        if(amount.size() == 1) { //there is no decimal, precision is 0 
             sAmount = amount[0];
         } else if (amount.size() == 2) {  // set precision
             precision = (uint8_t) amount[1].size();  //string length is the precision
             sAmount = amount[0] + amount[1];
         } else { //error
-            check(false, "Improper data sent to stoa(s). ");
+            check(false, "Improper data sent to stoa(s) - line 62. ");
         }
 
+        check(precision == 4, "System measurements (tons) and assets (COXC) must have 4 decimal places.");
+        check(_is_digits(sAmount), "Provided asset "+s+" contains non-numeric digits. ");
         int64_t nAmount = stoi(sAmount);
 
         return asset(nAmount, symbol(sc, precision)); 
@@ -87,7 +98,11 @@ struct struct_data {
                     time_point_sec tTest;
                     if(sVType == "s_") {}
                     else if(sVType == "n_") { nTest = (int64_t) stoi(asData[i2+1]); } //validates integer
-                    else if(sVType == "a_") { aTest = _stoa(asData[i2+1]); } //validates asset
+                    else if(sVType == "a_") { aTest = _stoa(asData[i2+1]); 
+                    
+                    print("i[" + to_string(i) + "]:aTest=" + aTest.to_string()+"   /n ");
+                    
+                    } //validates asset
                     else if(sVType == "t_") { tTest = time_point_sec(time_point::from_iso_string(asData[i2+1])); } //validates ISO time
                     else { check(false, "Invalid variable format, use s_, a_, n_, or t_.  "); }
                     nFound++;
@@ -113,6 +128,8 @@ struct struct_data {
         for(int i2=0; i2 < asData.size(); i2 = i2 + 2) {
             if(asData[i2] == sVarName) { return asData[i2+1]; } //found
         }
+
+        check(false, "Variable not found: " + sVarName);
 
         return NULL;
     }
@@ -158,7 +175,14 @@ struct struct_data {
     }
 
     const asset get_var_as_asset(std::string sVarName) {
-        return _stoa(get_var(sVarName));
+        string sOUT = get_var(sVarName);
+        asset aOUT = _stoa(sOUT);
+
+        /*if((sVarName != "a_gross") && (sVarName != "a_csink_pers")) {
+            check(false, "end here -- sOUT:" + sOUT + " -- sVarName: " + sVarName + " -- aOUT:" + aOUT.to_string());
+        }*/
+
+        return aOUT;
     }
 
     EOSLIB_SERIALIZE(struct_data, (header)(data)(token));

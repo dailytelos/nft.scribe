@@ -3,6 +3,7 @@
 REDESIGN
 -------------
 
+
 NEW PROCESS
 -----------
 
@@ -10,19 +11,11 @@ DONE: EBC Draft--->EBC Submit-->EBC Admin Appr-->Production Draft/Submit-->Suppl
 
 **Bridge Out Send**-->Bridge Admin Appr-->BRIDGE ACTIVITY
 
-Retire Credits Draft/Submit-->Admin Appr
+DONE: Retire Credits Draft/Submit-->Admin Appr
 
 DONE: Send->Resolve_Send
 
 -----------
-
-
-Use new framework.
-
-- Update org auths to specify companies to allow for: producer, or supplier specification
-- Simplify STATUS updates
-- Simplify AUTHORIZED settings
-
 
 
 
@@ -42,6 +35,7 @@ token ISSUES on csink
 
 other
 - Login (PHP + Nodeos) full-cycle logins (session unique login key -> EOSIO -> PHP queries key was posted (validated))
+- 2FA setup
 - prevent new user creation
 
 
@@ -52,28 +46,4 @@ ISSUES
 
 FINISHED
 --------------
-- switch final approval status to specific value for all things
-
-ebc / production
-- update orgid ebc certificate id reference, when ebc cert is approved by admin
-- when submitted validate production cert based on EBC cert
-- when submitted validate timeframe of EBC cert is still validate
-
-csink
-- when drafted validate c-sink against production cert
-- when approved by admin, apply sinks against production
-
-
-- Better validation of data vars passed
-- (It's ok, because simplifies admin users) Can approve draft not yet submitted
-- test ACTION datasubmit
-- test void _datasubmit
-- ACTION datasubmit
-- void _datasubmit
-- update _datasubmit for deletions (both types)
-- test ACTION datadraft
-- test ACTION _datadraft
-- ACTION datadraft
-- void _datadraft
-- Rebuilt contract using string data (more dynamic)
 

@@ -92,10 +92,10 @@ void _csink_check_prod(const uint64_t& csinkid) {
 
     uint64_t prod_org = cProd.header.orgid;
 
-    asset aCSink = cCsink.get_var_as_asset("a_gross");
+    asset aCSink = cCsink.get_var_as_asset("a_tavg");
     asset aProd  = cProd.get_var_as_asset("a_tproduced");
-    asset aIssu  = cProd.get_var_as_asset("a_tissued");
-    asset aRemain = asset((aProd.amount - aIssu.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
+    asset aSunk  = cProd.get_var_as_asset("a_tcsunk");
+    asset aRemain = asset((aProd.amount - aSunk.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
 
     check(aCSink.amount <= aRemain.amount, "Production run lacks remaining gross tonnage for you to sink, production run contains a remaining gross amount of: " + aRemain.to_string());
 };
@@ -122,26 +122,54 @@ void _csink_apply_prod(const uint64_t& csinkid) {
     uint64_t prod_org = cProd.header.orgid;
 
     asset aCSink = cCsink.get_var_as_asset("a_gross");
+    asset aTokenIss = cCsink.get_var_as_asset("a_tavg");
     asset aProd  = cProd.get_var_as_asset("a_tproduced");
-    asset aIssu  = cProd.get_var_as_asset("a_tissued");
-    asset aRemain = asset((aProd.amount - aIssu.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
+    asset aSunk  = cProd.get_var_as_asset("a_tcsunk");
+    asset aRemain = asset((aProd.amount - aSunk.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
 
     //production update for csink
     _data_table_pr.modify( data_itr_pr, get_self(), [&]( auto& row ) {
         
-        asset newIssued = asset((aCSink.amount + aIssu.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
-        check(newIssued.amount <= aProd.amount, "You cannot csink an amount greater than the production run. ");
+        //update a_tcsunk and check against a_tproduced
+        asset newSunk = asset((aCSink.amount + aSunk.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
+        check(newSunk.amount <= aProd.amount, "You cannot csink an amount greater than the production run. ");
+        row.d.set_var("a_tcsunk",newSunk.to_string());
+
+        //update a_tissued which is a token multiplied (COXC)
+        asset aOldIss   = cProd.get_var_as_asset("a_tissued");
+        asset newIssued = asset((aTokenIss.amount + aOldIss.amount), symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))); 
+
         row.d.set_var("a_tissued",newIssued.to_string());
 
-        check(row.d.header.status >= STATUS_DATA_CORP_APPROVED, "You may only execute data when organisation has approved. ");
-        
-        //apply execution to production cert if remaining amount is reduced to zero
-        if(aRemain.amount == 0) {
+        check(row.d.header.status >= STATUS_DATA_ADMIN_APPROVED, "Unable to apply production without admin approval to the production run. ");
+
+        if(row.d.header.status == STATUS_DATA_ADMIN_APPROVED) {
+            //Executed means that at least some C-Sink has been performed on production cert, so the production is now finalized
             row.d.header.executed(true);
         }
     });
 
-    asset aTokenIssue = asset(aCSink.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+    //finalize ebc certificate
+    uint64_t ebcid = (uint64_t) cCsink.get_var_as_int("n_ebc_certn");
+
+    data_index _data_table_ebc( get_self(), DATA_TYPE_CERT_EBC.value );
+    auto data_itr_ebc = _data_table_ebc.find(ebcid);
+
+    check(data_itr_ebc != _data_table_ebc.end(), "EBC ID data not found. ");
+
+    _data_table_ebc.modify( data_itr_ebc, get_self(), [&]( auto& row ) {
+
+        check(row.d.header.status >= STATUS_DATA_ADMIN_APPROVED, "Unable to apply C-Sink to EBC #, because the EBC has not been admin approved. ");        
+
+        if(row.d.header.status == STATUS_DATA_ADMIN_APPROVED) {
+            //Executed means that it has been used some
+            row.d.header.executed(true);
+        }
+
+    });
+
+    //start token issuance
+    asset aTokenIssue = asset(aTokenIss.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
     string sMemo = "Issuance of C-Sink # " + to_string(csinkid) + " for " + aCSink.to_string() + " to the amount of " + aTokenIssue.to_string();
 
     //issue token supply (will still need to be claimed)

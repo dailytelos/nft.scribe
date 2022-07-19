@@ -2,7 +2,7 @@
     const name DATA_TYPE_CERT_EBC  = name("cert.ebc");
     const name DATA_TYPE_CERT_PRO  = name("cert.prod");
     const name DATA_TYPE_CERT_SNK  = name("cert.csink");
-    const name DATA_TYPE_CERT_SNKI = name("cert.csink.is");
+    const name DATA_TYPE_CERT_SNKI = name("cert.csinkis");
     const name DATA_TYPE_PORTF     = name("portfolio");
     const name DATA_TYPE_ACT_SEND  = name("action.send");
     const name DATA_TYPE_ACT_RETR  = name("action.retire");
@@ -52,14 +52,14 @@ const uint8_t STATUS_DATA_EXECUTED        = 255;
 
 //GLOBALS FOR ACTIVITIES
     //Activity Types -- pass string as appr_type variable
-    const string ACTIVITY_DRAFT         = "draft";
+   /* const string ACTIVITY_DRAFT         = "draft";
     const string ACTIVITY_SUBMIT        = "submit";
     const string ACTIVITY_APPROVE       = "approve";
     const string ACTIVITY_ISSUE         = "issue";
     const string ACTIVITY_CLAIM         = "claim";
     const string ACTIVITY_LOCK          = "locked.status";
     const string ACTIVITY_DELETE_STATUS = "del.status";
-    const string ACTIVITY_DELETE_TOTAL  = "del.total";  // can be used on drafts to fully delete, otherwise can only be used by admins
+    const string ACTIVITY_DELETE_TOTAL  = "del.total";*/  // can be used on drafts to fully delete, otherwise can only be used by admins
                                                         // can not be used on a cert that issued any funds, use "del.status" on that
 
 //ADMIN ORG ID

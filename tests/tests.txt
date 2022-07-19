@@ -7,6 +7,10 @@ s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|t_
 0
 0
 
+//EBC CERT
+{"s_company","s_company_num","s_cert_num","t_issue","t_expire","a_csink_net","a_csink_pers"};
+s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|t_issue|2022-03-24T01:00:00.000Z|t_expire|2023-03-24T01:00:00.000Z|a_csink_net|3.2000 T|a_csink_pers|2.4000 T
+
 2022-03-24T01:00:00.000Z
 
 2023-03-24T01:00:00.000Z
@@ -20,3 +24,22 @@ s_company|TLCC Consultants Pte. Ltd.|s_company_num|81989|s_cert_num|BRT-32342|t_
 
 "n_prod_certn","n_port_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"
 
+
+    vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","t_issue","t_expire"};
+    vector<string> VARDEF_CERT_PROD     = {"s_title","n_ebc_certn","a_tproduced","a_tissued"};
+    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_CERT_CSNK_ISS = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_DATA_PORTF    = {"s_title","s_desc","s_img","a_csinks","a_retired"};
+    vector<string> VARDEF_ACT_SEND      = {"s_from","s_to","a_qty","s_memo"};
+    vector<string> VARDEF_ACT_RETIRE    = {"a_retired","s_data"};
+
+
+s_title|Production Run A|n_ebc_certn|1|a_tproduced|100.0000 T|a_tissued|0.0000 T
+
+n_prod_certn|1|s_loc|702|s_type|biochar|s_desc|Biochar applied to landfill|a_gross|10.0000 T|a_humidity|80.0000 P|a_tmin|6.0000 T|a_tmax|9.0000 T|a_tavg|7.5000 T|n_ystart|2022|n_yend|2023|n_claimed|0|a_qtyretired|0.0000 COXC|n_retired|0
+
+
+CSINK TEST
+
+{"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+n_prod_certn|9|s_loc|702|s_type|biochar|s_desc|Q1 Biochar Sink|a_gross|1.0000 T|a_humidity|85.0000 P|a_tmin|2.3056 T|a_tmax|2.8421 T|a_tavg|2.5543 T|n_ystart|2022|n_yend|2122|n_claimed|0|a_qtyretired|0.0000 COXC|n_retired|0

@@ -3,13 +3,14 @@
   public:
 
     //vector<string> -- Data Definitions
-    vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","t_issue","t_expire"};
-    vector<string> VARDEF_CERT_PROD     = {"s_title","n_ebc_certn","a_tproduced","a_tissued"};
-    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
-    vector<string> VARDEF_CERT_CSNK_ISS = {"n_prod_certn","s_loc","s_type","s_desc","a_gross","a_humidity","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_CERT_EBC      = {"s_company","s_company_num","s_cert_num","t_issue","t_expire","a_csink_gross","a_csink_net","a_csink_pers","s_filename"};
+    vector<string> VARDEF_CERT_PROD     = {"s_title","n_ebc_certn","a_tproduced","a_tcsunk","a_tissued"}; //,"s_limit_orgid","a_max_tcsunk"};
+    vector<string> VARDEF_CERT_CSNK     = {"n_prod_certn","n_ebc_certn","n_dbid","s_loc","s_type","s_application","a_gross","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+    vector<string> VARDEF_CERT_CSNK_ISS = {"n_prod_certn","n_ebc_certn","n_dbid","s_loc","s_type","s_application","a_gross","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
     vector<string> VARDEF_DATA_PORTF    = {"s_title","s_desc","s_img","a_csinks","a_retired"};
     vector<string> VARDEF_ACT_SEND      = {"s_from","s_to","a_qty","s_memo"};
     vector<string> VARDEF_ACT_RETIRE    = {"a_retired","s_data"};
+
 
   // Intitial Data Creation
   ACTION datadraft(const name& creator, const name& type, const string& strid, const string& data, const string& token, const uint8_t& edit, uint64_t& id);
@@ -24,14 +25,6 @@
 
   ACTION retire(const name& approver, const asset& quant);
 
-  // issued on c-sink
-  //ACTION issuecredits(const name& approver, const uint64_t& id);
-
-  // claim on c-sink
-  //ACTION claimcredits(const name& approver, const uint64_t& id);
-
-  // retire credits that were issued
-  // ACTION retirefunds(const name& sender, const asset& supply);
 
   private:
 
@@ -45,22 +38,34 @@
 
   void _retire(const name& approver, const asset& quant);
   
-/*
-  void isebccertvalid(const uint64_t& certid);
+  struct_data _get_data_by_id(const name& type, uint64_t& id);
 
-  void _issuecredits(const name& approver, const uint64_t& id);
-
-  void _claimcredits(const name& approver, const uint64_t& id);
-*/
-
-
-  //void _retirefunds(const name& sender, const asset& supply);
 
     TABLE tbldata {
       uint64_t   id;      //numeric id of activity
       struct_data d;      //cert data structure
 
       uint64_t primary_key() const { return id; }
+      uint128_t by_secondary() const { return ((uint128_t) d.header.orgid << 64) | (uint128_t) id; };
     };
     
-    typedef multi_index<name("data"), tbldata> data_index; 
+    //typedef multi_index<name("data"), tbldata> data_index; 
+
+/*
+  typedef eosio::multi_index<
+    name("data"),
+    tbldata,
+    eosio::indexed_by<
+      name("secin"),
+      eosio::const_mem_fun<
+        tbldata,
+        uint128_t,
+        &tbldata::secondary_key
+      >
+    >
+  >  data_index;
+*/
+
+  typedef eosio::multi_index<"data"_n, tbldata, eosio::indexed_by<"secid"_n, eosio::const_mem_fun<tbldata, uint128_t, &tbldata::by_secondary>>> data_index;
+
+  // more than 2 index example:  https://developers.eos.io/manuals/eosio.cdt/v1.7/group__multiindex

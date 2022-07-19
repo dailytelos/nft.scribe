@@ -1,7 +1,3 @@
-
-
-
-
 ACTION carboncert::datadraft(const name& creator, const name& type, const string& strid, const string& data, const string& token, const uint8_t& edit, uint64_t& id) {
     checkfreeze();
     require_auth(creator);
@@ -132,7 +128,7 @@ ACTION carboncert::claim(const name& approver, const name& type, const uint64_t&
     uint8_t auth = get_auth_by_org(approver, auth_org);
 
     //validate authority
-    bool bCerts = (type == DATA_TYPE_CERT_EBC) || (type == DATA_TYPE_CERT_PRO) || (type == DATA_TYPE_CERT_SNK) || (type == DATA_TYPE_PORTF);
+    bool bCerts = (type == DATA_TYPE_CERT_EBC) || (type == DATA_TYPE_CERT_PRO) || (type == DATA_TYPE_CERT_SNK) || (type == DATA_TYPE_CERT_SNKI) || (type == DATA_TYPE_PORTF);
     bool bSend  = (type == DATA_TYPE_ACT_SEND);
 
     if(bCerts || bSend) {
@@ -163,64 +159,6 @@ ACTION carboncert::retire(const name& approver, const asset& quant) {
 }
 
 
-// csinkclaim(const name& approver, const uint64_t& id)
-//   Allows 
-//
-//    approver - wholesaler doing the csink (must be authorised wholesaler)
-//    id       - production id
-//    sunk     - qty in tonn sunk
-//
-/*ACTION carboncert::csinkclaim(const name& approver, const uint64_t& id, const asset& sunk) {
-    checkfreeze();
-    require_auth(approver);
-
-    uint64_t auth_org = get_org_id(approver);
-    uint8_t auth = get_auth_by_org(approver, auth_org);
-
-    tuple<string, uint64_t, uint8_t, uint8_t, uint8_t> tplOrg = get_org_tuple(auth_org);
-
-    string   orgname    = get<0>(tplOrg);
-    uint64_t ebccertn   = get<1>(tplOrg);
-    uint8_t  producer   = get<2>(tplOrg);
-    uint8_t  supplier   = get<3>(tplOrg);
-    uint8_t  retire     = get<4>(tplOrg);
-
-    check(supplier == 1, "Organisation must have authorisation to perform c-sink activity, contact system administrator. ");
-
-
-}*/
-/*
-ACTION carboncert::issuecredits(const name& approver, const uint64_t& id) {
-    checkfreeze();
-    require_auth(approver);
-
-    //check for datasubmit auth
-    uint64_t auth_org = get_org_id(approver);
-    uint8_t auth = get_auth_by_org(approver, auth_org);
-
-
-
-    _issuecredits(approver, id);
-}
-
-ACTION carboncert::claimcredits(const name& approver, const uint64_t& id) {
-    checkfreeze();
-    require_auth(approver);
-
-    //check for datasubmit auth
-    uint64_t auth_org = get_org_id(approver);
-    uint8_t auth = get_auth_by_org(approver, auth_org);
-
-    _claimcredits(approver, id);
-}
-
-
-ACTION retirefunds(const name& sender, const asset& supply) {
-    checkfreeze();
-    require_auth(approver);
-
-
-}*/
 
 void carboncert::_datadraft(const name& creator, const name& type, const string& strid, const string& data, const string& token, const uint8_t& edit, uint64_t& id) {
 
@@ -301,8 +239,8 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
     }
 
     if(type == DATA_TYPE_ACT_SEND) {
-        struct_data cData = data_itr->d;
-        _check_send_from(creator, name(cData.get_var("s_from")));
+        struct_data cData_SEND = data_itr->d;
+        _check_send_from(creator, name(cData_SEND.get_var("s_from")));
     }
 }
 
@@ -346,18 +284,86 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
     if(data_itr == _data_table.end()){
         check(false, "Supplied identification for data record does not exist. ");
     } else { //update record
-        check(data_itr->d.header.status < STATUS_DATA_CORP_APPROVED, "You cannot submit data that was already approved. ");
+
+        struct_data cData;
+        struct_data cDataEBC;
+        struct_data cDataPROD;
+        asset a_csink_pers, a_csink_gross, a_csink_net;
+
+        //load up ebc cert data if dealing with a CSink Submission
+        if (type.value == DATA_TYPE_CERT_SNK.value) {
+            cData = data_itr->d;
+
+            //grab EBC data
+            uint64_t nEBC_Num = (uint64_t) cData.get_var_as_int("n_ebc_certn");
+            cDataEBC = _get_data_by_id(DATA_TYPE_CERT_EBC, nEBC_Num);
+
+            //grab Producer data
+            uint64_t nPROD_Num = (uint64_t) cData.get_var_as_int("n_prod_certn");
+            cDataPROD = _get_data_by_id(DATA_TYPE_CERT_PRO, nPROD_Num);
+        }
+
+
+        check(data_itr->d.header.status <= STATUS_DATA_ADMIN_APPROVED, "You cannot submit data that was already fully approved. ");
 
         _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
             
             row.d.is_data_valid(verify);
 
-            if (type.value == DATA_TYPE_CERT_PRO.value) {
-                row.d.set_var("a_tissued","0.0000 T");
+            if (type.value == DATA_TYPE_CERT_EBC.value) {
+                asset a_csink_gross = row.d.get_var_as_asset("a_csink_gross"); //"a_csink_gross","a_csink_net","a_csink_pers"
+                asset a_csink_net = row.d.get_var_as_asset("a_csink_net");
+                asset a_csink_pers = row.d.get_var_as_asset("a_csink_pers");
+
+                check(a_csink_gross.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_gross', must be 'T'.  ");
+                check(a_csink_net.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_net', must be 'T'.  ");
+                check(a_csink_pers.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_pers', must be 'T'.  ");
+
+            } else if (type.value == DATA_TYPE_CERT_PRO.value) {
+                //validate EBC Cert # is same company as production
+
+                //check asset symbols
+                asset a_tproduced = row.d.get_var_as_asset("a_tproduced");
+                check(a_tproduced.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_tproduced', must be 'T'.  ");
+
+                //set defaults
+                row.d.set_var("a_tcsunk","0.0000 T");
+                row.d.set_var("a_tissued","0.0000 "+getglobalstr(name("tokensymbol")));
+                
             } else if (type.value == DATA_TYPE_CERT_SNK.value) {
+                //{"n_prod_certn","n_ebc_certn","n_dbid","s_loc","s_type","s_application","a_gross","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+                //grab n_ebc_certn from Production directly, don't trust user input for n_ebc_certn
+                row.d.set_var("n_ebc_certn", cDataPROD.get_var("n_ebc_certn"));
+
+                //validate numbers 
+                check(row.d.get_var_as_int("n_ystart") > 2020, "Start year must be greater than 2020. ");
+
+                //derive n_yend based on start year + 100
+                int64_t n_yend = row.d.get_var_as_int("n_ystart") + 100;
+                row.d.set_var("n_yend",to_string(n_yend));
+
+                //check asset symbols
+                asset a_gross = row.d.get_var_as_asset("a_gross");
+                check(a_gross.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_gross', must be 'T'.  ");
+
+                //set defaults
                 row.d.set_var("n_claimed","0");
-                row.d.set_var("a_qtyretired","0.0000 T");
+                row.d.set_var("a_qtyretired",asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string());
                 row.d.set_var("n_retired","0");
+
+                //set min, max, avg based on what was supplied to EBC
+                //first must have EBC data from EBC Cert
+                asset a_csink_pers_2 = cDataEBC.get_var_as_asset("a_csink_pers");
+                asset a_csink_gross_2 = cDataEBC.get_var_as_asset("a_csink_gross");
+                asset a_csink_net_2 = cDataEBC.get_var_as_asset("a_csink_net");
+                asset a_tmin = asset((int64_t) (a_csink_pers_2.amount * a_gross.amount) / 10000, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                asset a_tmax = asset((int64_t) (a_csink_gross_2.amount * a_gross.amount) / 10000, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                asset a_tavg = asset((int64_t)  ((((a_csink_net_2.amount - a_csink_pers_2.amount)/2) + a_csink_pers_2.amount) * a_gross.amount) / 10000, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
+                
+                row.d.set_var("a_tmin", a_tmin.to_string()); // "a_csink_pers"
+                row.d.set_var("a_tmax", a_tmax.to_string()); // "a_csink_gross"
+                row.d.set_var("a_tavg", a_tavg.to_string()); // (("a_csink_net" - "a_csink_pers") / 2) + "a_csink_pers"
+
             } else if (type.value == DATA_TYPE_PORTF.value) {
                 row.d.set_var("a_csinks","0.0000 T");
                 row.d.set_var("a_retired","0.0000 T");
@@ -365,6 +371,10 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
 
             if(appr_type == "submit") {
                 row.d.header.submit(true);
+
+                if(type.value == DATA_TYPE_CERT_SNK.value)  {
+                    row.d.header.corp_approve(true); //for C-Sink Submission, it is auto-approved at the corporate level, we kick it to the admin for final approval
+                }
             } else if(appr_type == "corp_approve") {
                 row.d.header.corp_approve(true);
             } else if(appr_type == "admin_approve") {
@@ -377,316 +387,11 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
     }
 
     if(type == DATA_TYPE_ACT_SEND) {
-        struct_data cData = data_itr->d;
-        _check_send_from(approver, name(cData.get_var("s_from")));
+        struct_data cData_SEND = data_itr->d;
+        _check_send_from(approver, name(cData_SEND.get_var("s_from")));
     }
 }
 
-
-
-/*
-void carboncert::isebccertvalid(const uint64_t& certid) {
-    // standard row update
-    data_index _data_table( get_self(), DATA_TYPE_CERT_EBC.value);
-    auto data_itr = _data_table.find(certid);
-
-    check(data_itr != _data_table.end(), "Contract error, certid number does not exist in isebccertvalid! ");
-
-    struct_data cData = data_itr->d;
-
-    time_point_sec t_issue = cData.get_var_as_time("t_issue");
-    time_point_sec t_expire = cData.get_var_as_time("t_expire");
-    time_point_sec t_now = time_point_sec(current_time_point().sec_since_epoch());
-
-    check(t_now.sec_since_epoch() >= t_issue.sec_since_epoch(), "EBC Certification has not yet become active, it becomes valid on: " + t_issue.to_string());
-    check(t_now.sec_since_epoch() < t_expire.sec_since_epoch(), "EBC Certification has already expired on: " + t_expire.to_string());
-}
-
-void carboncert::_issuecredits(const name& approver, const uint64_t& id) {
-    // standard row update
-    data_index _data_table( get_self(), DATA_TYPE_CERT_SNK.value);
-    auto data_itr = _data_table.find(id);
-
-    check(data_itr != _data_table.end(), "Contract error, csink id  does not exist in _issuecredits! ");
-
-    struct_data cData = data_itr->d;
-
-    check(cData.header.status == STATUS_DATA_ADMIN_APPROVED, "Contract error, csink id was not approved by administrator.  Must be approved before tokens are issued. ");
-    
-    uint64_t n_prod_certn = cData.get_var_as_int("n_prod_certn");
-    uint64_t n_port_certn = cData.get_var_as_int("n_port_certn");
-    string s_loc = cData.get_var("s_loc");
-    string s_type = cData.get_var("s_type");
-    string s_desc = cData.get_var("s_desc");
-    asset a_gross = cData.get_var_as_asset("a_gross");
-    asset a_humidity = cData.get_var_as_asset("a_humidity");
-    asset a_tmin = cData.get_var_as_asset("a_tmin");
-    asset a_tmax = cData.get_var_as_asset("a_tmax");
-    asset a_tavg = cData.get_var_as_asset("a_tavg");  //<--- CSink is issued off of this metric.
-    uint64_t n_ystart = cData.get_var_as_int("n_ystart");
-    uint64_t n_yend = cData.get_var_as_int("n_yend");
-    uint64_t n_issued = cData.get_var_as_int("n_issued");
-    uint64_t n_claimed = cData.get_var_as_int("n_claimed");
-    asset a_qtyretired = cData.get_var_as_asset("a_qtyretired");
-    uint64_t n_retired = cData.get_var_as_int("n_retired");
-
-    check(n_retired == 0, "Contract error, this certificate claims to have been retired. ");
-    check(n_claimed == 0, "Contract error, csink id has already been claimed. ");
-    check(n_issued == 0, "Contract error, csink id has already been issued. ");
-
-    //issue token supply (will still need to be claimed)
-    asset issue = asset(a_tavg.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-    asset blank_retire = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-    string sMemo = "Issuing " + a_tavg.to_string() + " from CSink cert# " + to_string(id) + " as " + issue.to_string() + ". ";
-
-    _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
-        row.d.set_var("n_issued","1");
-        row.d.set_var("a_qtyretired", blank_retire.to_string());
-    });
-
-    action(
-        permission_level{ getcontract(), "active"_n},
-        getcontract(),
-        "issue"_n,
-        std::make_tuple(
-            getcontract(),
-            issue,
-            sMemo
-        )
-    ).send();
-
-    //swap over to new table
-    // standard row update
-    uint64_t nCertIssCount = getglobalint(name("issuecertn"));
-    data_index _data_table_i( get_self(), GLOBAL_COUNT_SNK_ISS.value);
-    auto data_itr_i = _data_table_i.find(nCertIssCount);
-
-    _data_table_i.emplace( get_self(), [&]( auto& row ) {
-        row.id = nCertIssCount;
-        row.d = data_itr->d;
-    });
-
-    nCertIssCount = nCertIssCount + 1;
-    setglobalint(name("issuecertn"), nCertIssCount);
-
-    data_itr = _data_table.erase(data_itr);
-}
-
-
-void carboncert::_claimcredits(const name& approver, const uint64_t& id) {
-    // standard row update
-    data_index _data_table( get_self(), GLOBAL_COUNT_SNK_ISS.value);
-    auto data_itr = _data_table.find(id);
-
-    check(data_itr != _data_table.end(), "Contract error, csink id  does not exist in _claimcredits! ");
-
-    struct_data cData = data_itr->d;
-
-    check(cData.header.status == STATUS_DATA_ADMIN_APPROVED, "Contract error, csink id was not approved by administrator.  Must be approved before tokens are claimed. ");
-    
-    uint64_t n_prod_certn = cData.get_var_as_int("n_prod_certn");
-    uint64_t n_port_certn = cData.get_var_as_int("n_port_certn");
-    string s_loc = cData.get_var("s_loc");
-    string s_type = cData.get_var("s_type");
-    string s_desc = cData.get_var("s_desc");
-    asset a_gross = cData.get_var_as_asset("a_gross");
-    asset a_humidity = cData.get_var_as_asset("a_humidity");
-    asset a_tmin = cData.get_var_as_asset("a_tmin");
-    asset a_tmax = cData.get_var_as_asset("a_tmax");
-    asset a_tavg = cData.get_var_as_asset("a_tavg");  //<--- CSink is issued off of this metric.
-    uint64_t n_ystart = cData.get_var_as_int("n_ystart");
-    uint64_t n_yend = cData.get_var_as_int("n_yend");
-    uint64_t n_issued = cData.get_var_as_int("n_issued");
-    uint64_t n_claimed = cData.get_var_as_int("n_claimed");
-    asset a_qtyretired = cData.get_var_as_asset("a_qtyretired");
-    uint64_t n_retired = cData.get_var_as_int("n_retired");
-
-    check(n_retired == 0, "Contract error, this certificate claims to have been retired. ");
-    check(n_claimed == 0, "Contract error, csink id has already been claimed. ");
-    check(n_issued == 1, "Contract error, csink id has not yet been issued. ");
-
-    //issue token supply (will still need to be claimed)
-    asset claim = asset(a_tavg.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-    string sMemo = "Claiming " + a_tavg.to_string() + " from CSink cert# " + to_string(id) + " as " + claim.to_string() + ". ";
-
-    _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
-        row.d.set_var("n_claimed","1");
-    });
-
-    action(
-        permission_level{ getcontract(), "active"_n},
-        getcontract(),
-        "transfer"_n,
-        std::make_tuple(
-            getcontract(),
-            approver,
-            claim,
-            sMemo
-        )
-    ).send();
-}
-
-void carboncert::_retirefunds(const name& sender, const asset& supply) {
-
-    check(supply.amount > 0, "Unable to retire 0 amount given in variable 'supply'. ");
-
-    //check for sufficient deposit and reduce
-    string sMemo   = "Retiring funds " + supply.to_string();
-    name sAcct     = sender;
-    asset aRetAmt  = supply;
-    subdeposit(sAcct, aRetAmt, sMemo);
-
-    // standard row update
-    uint64_t nRetCount = getglobalint(name("retirecertn"));
-    data_index _data_table( get_self(), GLOBAL_COUNT_SNK_ISS.value);
-    auto data_itr = _data_table.find(nRetCount);
-
-    check(data_itr != _data_table.end(), "Contract error, csink id  does not exist in _retirefunds! ");
-
-    struct_data cData = data_itr->d;
-
-    check(cData.header.status == STATUS_DATA_ADMIN_APPROVED, "Contract error, csink id was not approved by administrator.  Must be approved before tokens are retired. ");
-    
-    uint64_t n_prod_certn = cData.get_var_as_int("n_prod_certn");
-    uint64_t n_port_certn = cData.get_var_as_int("n_port_certn");
-    string s_loc          = cData.get_var("s_loc");
-    string s_type         = cData.get_var("s_type");
-    string s_desc         = cData.get_var("s_desc");
-    asset a_gross         = cData.get_var_as_asset("a_gross");
-    asset a_humidity      = cData.get_var_as_asset("a_humidity");
-    asset a_tmin          = cData.get_var_as_asset("a_tmin");
-    asset a_tmax          = cData.get_var_as_asset("a_tmax");
-    asset a_tavg          = cData.get_var_as_asset("a_tavg");        //<--- CSink is issued off of this metric.
-    uint64_t n_ystart     = cData.get_var_as_int("n_ystart");
-    uint64_t n_yend       = cData.get_var_as_int("n_yend");
-    uint64_t n_issued     = cData.get_var_as_int("n_issued");
-    uint64_t n_claimed    = cData.get_var_as_int("n_claimed");
-    asset a_qtyretired    = cData.get_var_as_asset("a_qtyretired");
-    uint64_t n_retired    = cData.get_var_as_int("n_retired");
-
-    //check(n_retired == 0, "Contract error, this certificate claims to have been retired already. ");
-    //check(n_claimed == 1, "Contract error, this csink has not been claimed. ");
-    check(n_issued == 1, "Contract error, csink id has not yet been issued. ");
-
-    int16_t nIndex    = 0;
-    asset aRetRemain  = supply;
-    asset aCertRemain;
-
-    while((aRetRemain.amount > 0) && (nIndex < 30)) {
-        cData        = data_itr->d;
-        a_tavg       = cData.get_var_as_asset("a_tavg");
-        a_qtyretired = cData.get_var_as_asset("a_qtyretired");
-
-        aCertRemain  = asset(a_tavg.amount - a_qtyretired.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-
-        if(aCertRemain.amount > aRetRemain.amount) {  //increase a_qtyretired, but do not mark as retired cert nor increment retired count
-            aCertRemain.amount = aCertRemain.amount - aRetRemain.amount;
-            aRetRemain.amount = 0;
-        } else {
-            aRetRemain.amount = aRetRemain.amount - aCertRemain.amount;
-            aCertRemain.amount = 0;
-        }
-
-        //update variables
-        _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
-            row.d.set_var("n_claimed","1");
-        });
-
-        nIndex++;
-        data_itr = _data_table.find(nRetCount + nIndex);
-    }
-}
-
-
-
-void carboncert::retiredep(const name& sender, const asset& supply, const uint64_t& orgid) { 
-    
-    int64_t nAmtToRetire = supply.amount;
-    symbol_code cUnit = supply.symbol.code();
-    string sUnit = cUnit.to_string();
-    uint8_t nPrec = supply.symbol.precision();
-
-    asset aAmtToRetire = asset(nAmtToRetire, symbol(cUnit, 4));
-
-    check(nAmtToRetire > 0, "E-t152 - Certificate must have a positive supply value. ");
-    check(sUnit == getglobalstr(name("tokensymbol")), "E-t153 - Symbol specified is incorrect for this contract. ");
-    check(nPrec == getglobalint(name("tokenprec")), "E-t154 - Issue precision of token is mis-match with contract precision.  ");
-
-    //get globals
-    uint64_t certcount   = getglobalint(name("certcount"));
-    uint64_t retirecount = getglobalint(name("retirecount"));
-
-    check(retirecount <= certcount, "E-t155 - Unable to process transaction (contract error retirecount <= certcount.) ");
-
-    certs_index _certs( get_self(), get_self().value );
-    auto cert_itr = _certs.find(retirecount);
-
-    int64_t nSupply = cert_itr->supply.amount;
-    int64_t nRetired = cert_itr->qtyretired.amount;
-
-    check(nRetired < nSupply, "E-t156 - Unable to process transaction, no remaining amount to retire on certn (" + to_string(retirecount) + "). ");
-
-    int64_t nPriorAmt = 0;
-    uint8_t nIndex = 0;
-
-    vector<carboncert::retiredcert>    retCerts;
-    carboncert::retiredcert retCert;
-
-    while((aAmtToRetire.amount > 0) && (nIndex < 20)) {
-        retCert.certnum = cert_itr->certnum;
-        retCert.certid = cert_itr->certid;
-        
-        nPriorAmt = aAmtToRetire.amount;
-
-        //check if exceeds certcount
-        check((retirecount + nIndex) <= certcount, "E-t192 - Unable to retire such a large supply, choose to retire less credits. ");
-
-        aAmtToRetire = retireamount((retirecount + nIndex), aAmtToRetire);
-        retCert.qtyretired = asset(nPriorAmt - aAmtToRetire.amount, symbol(cUnit, 4));
-
-        retCerts.push_back(retCert);
-
-        nIndex++;
-        cert_itr = _certs.find(retirecount + nIndex);
-    }
-
-    check(nIndex < 50, "E-t51 - Unable to retire such a large supply, choose to retire less credits. ");
-
-    //add entry to: typedef multi_index<name("retired"), retirements> retire_index;
-    uint64_t nRetCt = getglobalint(name("retiredtblct")) + 1; 
-    retire_index _retired( get_self(), get_self().value );
-    auto ret_itr = _retired.find(nRetCt);
-
-    check(ret_itr == _retired.end(), "E-t162 - Value error with retiredtblct global row already exists. ");
-
-    _retired.emplace( get_self(), [&]( auto& ret_row ) {
-        ret_row.retirenum = nRetCt;
-        ret_row.orgid = getorgid(sender);
-        ret_row.account = sender;
-        ret_row.supplyret = supply;
-        ret_row.certs = retCerts;
-        ret_row.retiredate = time_point_sec(current_time_point().sec_since_epoch());
-    });
-
-    setglobalint(name("retiredtblct"), nRetCt);
-
-    string sMemo = "Token retirement from " + get_self().to_string();
-    
-    action(
-            permission_level{ get_self(), "active"_n},
-            getcontract(),
-            "transfer"_n,
-            std::make_tuple(
-                get_self(),
-                getcontract(),
-                supply,
-                sMemo
-            )
-        ).send();
-    
-    //update typedef multi_index<name("retirestat"), certstats> retirestat_index;
-    retirestat(orgid, supply);
-}*/
 
 void carboncert::_execute(const name& approver, const name& type, const uint64_t& id) {
 
@@ -735,15 +440,15 @@ void carboncert::_execute(const name& approver, const name& type, const uint64_t
             row.d.is_data_valid(verify);
 
             if(type.value == DATA_TYPE_CERT_EBC.value) {
-                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "You may only execute data when admin has approved. ");
+                check(false, "Execution of ebc occurs when C-Sink happens. ");
             } else if (type.value == DATA_TYPE_CERT_PRO.value) {
                 check(false, "Execution of production occurs when C-Sink happens. ");
             } else if (type.value == DATA_TYPE_CERT_SNK.value) {
-                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "You may only execute data when admin has approved. ");
+                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "Data certificate has wrong status code to perform this action. ");
             } else if (type.value == DATA_TYPE_PORTF.value) {
-                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "You may only execute data when admin has approved. ");
+                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "Data certificate has wrong status code to perform this action. ");
             } else if (type.value == DATA_TYPE_ACT_SEND.value) {
-                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "You may only execute data when admin has approved. ");
+                check(row.d.header.status == STATUS_DATA_ADMIN_APPROVED, "Data certificate has wrong status code to perform this action. ");
             } else { check(false, "Specified type for draft is invalid. "); }
 
             row.d.header.executed(true);
@@ -842,6 +547,8 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
                 check(row.d.header.status == STATUS_DATA_EXECUTED, "You may only claim after csink is executed. ");
             } else { check(false, "Specified type for draft is invalid. "); }
 
+            //update claimed = 1
+            check(row.d.get_var_as_int("n_claimed") == 0, "This C-Sink already has  claimed flag set as true. ");
             row.d.set_var("n_claimed","1");
 
             sMemo = "Data type " + type.to_string() + " #" + to_string(count) + "  was claimed by " + approver.to_string() + " (strid: " + row.d.header.strid + ") ";
@@ -850,7 +557,7 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
     }
 
     struct_data cCsink = data_itr->d;
-    asset aCSink = cCsink.get_var_as_asset("a_gross");
+    asset aCSink = cCsink.get_var_as_asset("a_tavg");
     asset aTokenIssue = asset(aCSink.amount, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
 
     sMemo = sMemo + " Claimed: " + aTokenIssue.to_string();
@@ -941,7 +648,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
 
             row.d.set_var("a_qtyretired",aRetiredNew.to_string());
 
-            sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("n_prod_certn") + "*";
+            sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("n_prod_certn") + "," + row.d.get_var("n_ebc_cert") + "*";
     
         });
     }
@@ -963,7 +670,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
         data_index _data_table_ret( get_self(), DATA_TYPE_ACT_RETR.value );
         auto data_itr_ret = _data_table_ret.find(count_ret);
 
-        check(data_itr_ret != _data_table_ret.end(), "Retirement error, contact administrator. ");
+        check(data_itr_ret == _data_table_ret.end(), "Retirement error, contact administrator. ");
 
         string sSTRID = "";
         string sDataRow = "a_retired|" + quant.to_string() + "|s_data|" + sData_Ret;
@@ -980,7 +687,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
                         sToken
                    );
 
-            row.d.is_data_valid(verify);
+            row.d.is_data_valid(verify_ret);
         });
 
         setglobalint(countvar_ret, count_ret);
@@ -994,7 +701,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
 
     //send amount off to COXC to later retire
     action(
-        permission_level{ getcontract(), "active"_n},
+        permission_level{ get_self(), "active"_n},
         getcontract(),
         "transfer"_n,
         std::make_tuple(
@@ -1004,4 +711,26 @@ void carboncert::_retire(const name& approver, const asset& quant) {
             sMemo
         )
     ).send();
+}
+
+
+carboncert::struct_data carboncert::_get_data_by_id(const name& type, uint64_t& id) {
+
+    struct_data cData;
+
+    name scope = type;
+    uint64_t count = id;
+
+    data_index _data_table( get_self(), scope.value );
+    auto data_itr = _data_table.find(count);
+
+    //test if record exists
+    if(data_itr == _data_table.end()){
+        check(false, "Supplied identification for data record does not exist in _get_data_by_id(" + type.to_string() + ", " + to_string(id) + "). ");
+    } else { //return record
+
+        return data_itr->d;
+    }
+
+    return cData;
 }
