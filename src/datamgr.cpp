@@ -729,6 +729,8 @@ void carboncert::_retire(const name& approver, const asset& quant) {
     uint64_t auth_org = get_org_id(approver);
     uint8_t auth = get_auth_by_org(approver, auth_org);
 
+    uint8_t limit_counter = 0;
+
     while(!bAllRetired) {
         //decrement csink amount
 
@@ -783,6 +785,12 @@ void carboncert::_retire(const name& approver, const asset& quant) {
             sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("u_prod_certn") + "," + row.d.get_var("u_ebc_certn") + "*";
     
         });
+
+        limit_counter++;
+
+        if(limit_counter >= 40) {
+            check(false, "The current que of C-Sinks to retire contains many small balances.  The maximum limit of 40 CSinks has been hit.  Try retiring a smaller value to properly execute this retirement. ");
+        }
     }
 
     //updates retirement count tracker
