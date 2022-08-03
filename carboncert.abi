@@ -344,6 +344,10 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "reforgid",
+                    "type": "uint64"
+                },
+                {
                     "name": "status",
                     "type": "uint8"
                 },
@@ -487,6 +491,20 @@
                     "type": "struct_data"
                 }
             ]
+        },
+        {
+            "name": "zzdeleterow",
+            "base": "",
+            "fields": [
+                {
+                    "name": "type",
+                    "type": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
         }
     ],
     "actions": [
@@ -578,6 +596,11 @@
         {
             "name": "sysglobalstr",
             "type": "sysglobalstr",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "zzdeleterow",
+            "type": "zzdeleterow",
             "ricardian_contract": ""
         }
     ],

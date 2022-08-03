@@ -50,7 +50,7 @@ void _csink_producer_appr(const name& approver, const uint64_t& csinkid) {
     check(data_itr_cs != _data_table_cs.end(), "C-Sink ID data not found. ");
 
     struct_data cCsink = data_itr_cs->d;
-    uint64_t prodid = (uint64_t) cCsink.get_var_as_int("n_prod_certn");
+    uint64_t prodid = (uint64_t) cCsink.get_var_as_uint("u_prod_certn");
 
     data_index _data_table_pr( get_self(), DATA_TYPE_CERT_PRO.value );
     auto data_itr_pr = _data_table_pr.find(prodid);
@@ -81,23 +81,24 @@ void _csink_check_prod(const uint64_t& csinkid) {
     check(data_itr_cs != _data_table_cs.end(), "C-Sink ID data not found. ");
 
     struct_data cCsink = data_itr_cs->d;
-    uint64_t prodid = (uint64_t) cCsink.get_var_as_int("n_prod_certn");
+    uint64_t prodid = (uint64_t) cCsink.get_var_as_uint("u_prod_certn");
 
     data_index _data_table_pr( get_self(), DATA_TYPE_CERT_PRO.value );
     auto data_itr_pr = _data_table_pr.find(prodid);
 
-    struct_data cProd = data_itr_pr->d;
-
     check(data_itr_pr != _data_table_pr.end(), "Production ID data not found. ");
+
+    struct_data cProd = data_itr_pr->d;
 
     uint64_t prod_org = cProd.header.orgid;
 
-    asset aCSink = cCsink.get_var_as_asset("a_tavg");
+    asset aCSink = cCsink.get_var_as_asset("a_gross");
     asset aProd  = cProd.get_var_as_asset("a_tproduced");
     asset aSunk  = cProd.get_var_as_asset("a_tcsunk");
     asset aRemain = asset((aProd.amount - aSunk.amount), symbol(aProd.symbol.code(), aProd.symbol.precision())); 
 
     check(aCSink.amount <= aRemain.amount, "Production run lacks remaining gross tonnage for you to sink, production run contains a remaining gross amount of: " + aRemain.to_string());
+    
 };
 
 
@@ -110,7 +111,7 @@ void _csink_apply_prod(const uint64_t& csinkid) {
     check(data_itr_cs != _data_table_cs.end(), "C-Sink ID data not found. ");
 
     struct_data cCsink = data_itr_cs->d;
-    uint64_t prodid = (uint64_t) cCsink.get_var_as_int("n_prod_certn");
+    uint64_t prodid = (uint64_t) cCsink.get_var_as_uint("u_prod_certn");
 
     data_index _data_table_pr( get_self(), DATA_TYPE_CERT_PRO.value );
     auto data_itr_pr = _data_table_pr.find(prodid);
@@ -150,7 +151,7 @@ void _csink_apply_prod(const uint64_t& csinkid) {
     });
 
     //finalize ebc certificate
-    uint64_t ebcid = (uint64_t) cCsink.get_var_as_int("n_ebc_certn");
+    uint64_t ebcid = (uint64_t) cCsink.get_var_as_uint("u_ebc_certn");
 
     data_index _data_table_ebc( get_self(), DATA_TYPE_CERT_EBC.value );
     auto data_itr_ebc = _data_table_ebc.find(ebcid);

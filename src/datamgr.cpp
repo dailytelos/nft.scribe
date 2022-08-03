@@ -19,7 +19,7 @@ ACTION carboncert::datadraft(const name& creator, const name& type, const string
     } else {
         check(false, "Invalid activity specified. ");
     }
-
+    
     _datadraft(creator, type, strid, data, token, edit, id);
 }
 
@@ -37,18 +37,19 @@ ACTION carboncert::datasubmit(const name& approver, const name& type, const uint
     bool bSend  = (type == DATA_TYPE_ACT_SEND);
 
     if(bCerts || bSend) {
+        
         if(appr_type == "submit") {
             check( (auth == AUTH_LEVEL_CORP_SUBMIT) ||
             (auth == AUTH_LEVEL_CORP_ADMIN) ||
             (auth == AUTH_ADMIN_MANL_APPROVE) ||
             (auth == AUTH_ADMIN_MASTER) ||
             (auth == AUTH_LEVEL_ROOTADMIN), "You lack the neccessary authorisation to perform this action. ");
+
         } else if(appr_type == "corp_approve") { 
 
             //for csink, corp approval references the production corp, not the csink creator
             if(type == DATA_TYPE_CERT_SNK) {
                 _csink_producer_appr(approver, id);
-                _csink_check_prod(id);
             } else {
                 check( ((auth == AUTH_LEVEL_CORP_ADMIN) ||
                 (auth == AUTH_ADMIN_MANL_APPROVE) ||
@@ -159,6 +160,53 @@ ACTION carboncert::retire(const name& approver, const asset& quant) {
 }
 
 
+ACTION carboncert::zzdeleterow(const name& type, uint64_t& id) {
+
+    require_auth(get_self());
+
+    name scope = type;
+    name countvar = name_null;
+    vector<string> verify = {};
+    
+    if(type.value == DATA_TYPE_CERT_EBC.value) {
+        countvar = GLOBAL_COUNT_EBC;
+        verify = VARDEF_CERT_EBC;
+    } else if (type.value == DATA_TYPE_CERT_PRO.value) {
+        countvar = GLOBAL_COUNT_PRO;
+        verify = VARDEF_CERT_PROD;
+    } else if (type.value == DATA_TYPE_CERT_SNK.value) {
+        countvar = GLOBAL_COUNT_SNK;
+        verify = VARDEF_CERT_CSNK;
+    } else if (type.value == DATA_TYPE_CERT_SNKI.value) {
+        countvar = GLOBAL_COUNT_SNKI;
+        verify = VARDEF_CERT_CSNK_ISS;
+    } else if (type.value == DATA_TYPE_PORTF.value) {
+        countvar = GLOBAL_COUNT_PRT;
+        verify = VARDEF_DATA_PORTF;
+    } else if (type.value == DATA_TYPE_ACT_SEND.value) {
+        countvar = GLOBAL_COUNT_SND;
+        verify = VARDEF_ACT_SEND;
+    } else if (type.value == DATA_TYPE_ACT_RETR.value) {
+        countvar = GLOBAL_COUNT_RET;
+        verify = VARDEF_ACT_RETIRE;
+    } else { check(false, "Specified type for draft is invalid. "); }
+
+    uint64_t count = id;
+    string sMemo   = "";
+
+    data_index _data_table( get_self(), scope.value );
+    auto data_itr = _data_table.find(count);
+
+    //emplace new data
+    if(data_itr != _data_table.end()){
+
+        _data_table.erase(data_itr);
+
+    }  else {
+        check(false, "Failed to erase data row. ");
+    }
+}
+
 
 void carboncert::_datadraft(const name& creator, const name& type, const string& strid, const string& data, const string& token, const uint8_t& edit, uint64_t& id) {
 
@@ -186,7 +234,7 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
         verify = VARDEF_ACT_SEND;
     } else { check(false, "Specified type for draft is invalid. "); }
 
-    uint64_t count = (edit == 1) ? id : getglobalint(countvar) + 1;
+    uint64_t count = (edit == 1) ? id : getglobalint(countvar) - 1;
     string sMemo   = "";
 
     data_index _data_table( get_self(), scope.value );
@@ -204,12 +252,30 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
         _data_table.emplace( get_self(), [&]( auto& row ) {
             row.id = count;
             row.d  = struct_data(
-                        struct_header(count, strid, type, creator, auth_org, STATUS_NONE),
+                        struct_header(count, strid, type, creator, auth_org, 0, STATUS_NONE),
                         data,
                         token
                    );
 
             row.d.is_data_valid(verify);
+
+            //other verifications
+            if(type.value == DATA_TYPE_CERT_PRO.value) {
+                //grab EBC data
+                uint64_t nEBC_num    = row.d.get_var_as_uint("u_ebc_certn");
+
+                struct_data cDataEBC = _get_data_by_id(DATA_TYPE_CERT_EBC, nEBC_num);
+
+                check(cDataEBC.header.status >= STATUS_DATA_ADMIN_APPROVED, "The EBC Cert has not yet been given final approval. ");
+            } else if (type.value == DATA_TYPE_CERT_SNK.value) {
+                //grab Producer data
+                uint64_t nPROD_Num    = row.d.get_var_as_uint("u_prod_certn");
+                struct_data cDataPROD = _get_data_by_id(DATA_TYPE_CERT_PRO, nPROD_Num);
+
+                row.d.header.reforgid = cDataPROD.header.orgid;
+
+                check(cDataPROD.header.status >= STATUS_DATA_ADMIN_APPROVED, "The production declaration has not yet been given final approval. ");
+            }
 
             row.d.header.draft(true);
         
@@ -222,14 +288,34 @@ void carboncert::_datadraft(const name& creator, const name& type, const string&
         check(data_itr->d.header.status < STATUS_DATA_CORP_APPROVED, "You cannot edit data that was already approved. ");
 
         _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
+
+            row.d.check_org_match(auth_org);
+
             row.id = count;
             row.d  = struct_data(
-                        struct_header(count, strid, type, creator, auth_org, STATUS_NONE),
+                        struct_header(count, strid, type, creator, auth_org, 0, STATUS_NONE),
                         data,
                         token
                    );
 
             row.d.is_data_valid(verify);
+
+            //other verifications
+            if(type.value == DATA_TYPE_CERT_PRO.value) {
+                //grab EBC data
+                uint64_t nEBC_num    = row.d.get_var_as_uint("u_ebc_certn");
+                struct_data cDataEBC = _get_data_by_id(DATA_TYPE_CERT_EBC, nEBC_num);
+
+                check(cDataEBC.header.status >= STATUS_DATA_ADMIN_APPROVED, "The EBC Cert has not yet been given final approval. ");
+            } else if (type.value == DATA_TYPE_CERT_SNK.value) {
+                //grab Producer data
+                uint64_t nPROD_Num    = row.d.get_var_as_uint("u_prod_certn");
+                struct_data cDataPROD = _get_data_by_id(DATA_TYPE_CERT_PRO, nPROD_Num);
+
+                row.d.header.reforgid = cDataPROD.header.orgid;
+
+                check(cDataPROD.header.status >= STATUS_DATA_ADMIN_APPROVED, "The production declaration has not yet been given final approval. ");
+            }
 
             row.d.header.draft(true);
         
@@ -295,11 +381,11 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
             cData = data_itr->d;
 
             //grab EBC data
-            uint64_t nEBC_Num = (uint64_t) cData.get_var_as_int("n_ebc_certn");
+            uint64_t nEBC_Num = (uint64_t) cData.get_var_as_uint("u_ebc_certn");
             cDataEBC = _get_data_by_id(DATA_TYPE_CERT_EBC, nEBC_Num);
 
             //grab Producer data
-            uint64_t nPROD_Num = (uint64_t) cData.get_var_as_int("n_prod_certn");
+            uint64_t nPROD_Num = (uint64_t) cData.get_var_as_uint("u_prod_certn");
             cDataPROD = _get_data_by_id(DATA_TYPE_CERT_PRO, nPROD_Num);
         }
 
@@ -307,6 +393,8 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
         check(data_itr->d.header.status <= STATUS_DATA_ADMIN_APPROVED, "You cannot submit data that was already fully approved. ");
 
         _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
+
+            row.d.check_org_match(auth_org);
             
             row.d.is_data_valid(verify);
 
@@ -318,6 +406,11 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
                 check(a_csink_gross.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_gross', must be 'T'.  ");
                 check(a_csink_net.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_net', must be 'T'.  ");
                 check(a_csink_pers.symbol.code().to_string() == "T", "Invalid symbol supplied for 'a_csink_pers', must be 'T'.  ");
+
+                //set active ebc certificate
+                if(appr_type == "admin_approve") {
+                    _setorgcert(row.d.header.orgid, id);
+                }
 
             } else if (type.value == DATA_TYPE_CERT_PRO.value) {
                 //validate EBC Cert # is same company as production
@@ -331,9 +424,13 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
                 row.d.set_var("a_tissued","0.0000 "+getglobalstr(name("tokensymbol")));
                 
             } else if (type.value == DATA_TYPE_CERT_SNK.value) {
-                //{"n_prod_certn","n_ebc_certn","n_dbid","s_loc","s_type","s_application","a_gross","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
-                //grab n_ebc_certn from Production directly, don't trust user input for n_ebc_certn
-                row.d.set_var("n_ebc_certn", cDataPROD.get_var("n_ebc_certn"));
+
+                //verify remaining production available to c-sink
+                _csink_check_prod(id);
+
+                //{"u_prod_certn","u_ebc_certn","n_dbid","s_loc","s_type","s_application","a_gross","a_tmin","a_tmax","a_tavg","n_ystart","n_yend","n_claimed","a_qtyretired","n_retired"};
+                //grab u_ebc_certn from Production directly, don't trust user input for u_ebc_certn
+                row.d.set_var("u_ebc_certn", cDataPROD.get_var("u_ebc_certn"));
 
                 //validate numbers 
                 check(row.d.get_var_as_int("n_ystart") > 2020, "Start year must be greater than 2020. ");
@@ -367,6 +464,24 @@ void carboncert::_datasubmit(const name& approver, const name& type, const uint6
             } else if (type.value == DATA_TYPE_PORTF.value) {
                 row.d.set_var("a_csinks","0.0000 T");
                 row.d.set_var("a_retired","0.0000 T");
+            }
+
+
+            //other verifications - duplicated in draft
+            if(type.value == DATA_TYPE_CERT_PRO.value) {
+                //grab EBC data
+                uint64_t nEBC_num    = row.d.get_var_as_uint("u_ebc_certn");
+                struct_data cDataEBC = _get_data_by_id(DATA_TYPE_CERT_EBC, nEBC_num);
+
+                check(cDataEBC.header.status >= STATUS_DATA_ADMIN_APPROVED, "The EBC Cert has not yet been given final approval. ");
+            } else if (type.value == DATA_TYPE_CERT_SNK.value) {
+                //grab Producer data
+                uint64_t nPROD_Num    = row.d.get_var_as_uint("u_prod_certn");
+                struct_data cDataPROD = _get_data_by_id(DATA_TYPE_CERT_PRO, nPROD_Num);
+
+                row.d.header.reforgid = cDataPROD.header.orgid;
+
+                check(cDataPROD.header.status >= STATUS_DATA_ADMIN_APPROVED, "The production declaration has not yet been given final approval. ");
             }
 
             if(appr_type == "submit") {
@@ -437,6 +552,12 @@ void carboncert::_execute(const name& approver, const name& type, const uint64_t
 
         _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
 
+            if (type.value == DATA_TYPE_CERT_SNK.value) {
+                row.d.check_reforg_match(auth_org); //producer claims the token, this is reforg
+            } else {
+                row.d.check_org_match(auth_org);
+            }
+            
             row.d.is_data_valid(verify);
 
             if(type.value == DATA_TYPE_CERT_EBC.value) {
@@ -467,7 +588,7 @@ void carboncert::_execute(const name& approver, const name& type, const uint64_t
         name countvar_ci = GLOBAL_COUNT_SNKI;
         vector<string> verify_ci = VARDEF_CERT_CSNK_ISS;
 
-        uint64_t count_ci = getglobalint(countvar_ci) + 1;
+        uint64_t count_ci = getglobalint(countvar_ci) - 1;
     
         data_index _data_table_ci( get_self(), DATA_TYPE_CERT_SNKI.value );
         auto data_itr_ci = _data_table_ci.find(count_ci);
@@ -534,12 +655,16 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
     uint64_t auth_org = get_org_id(approver);
     uint8_t auth = get_auth_by_org(approver, auth_org);
 
+    name receiver = approver;
+
     //test if record exists
     if(data_itr == _data_table.end()){
         check(false, "Supplied identification for data record does not exist. ");
     } else { //update record
 
         _data_table.modify( data_itr, get_self(), [&]( auto& row ) {
+
+            row.d.check_reforg_match(auth_org); //producer claims the token, this is reforg
 
             row.d.is_data_valid(verify);
 
@@ -550,6 +675,10 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
             //update claimed = 1
             check(row.d.get_var_as_int("n_claimed") == 0, "This C-Sink already has  claimed flag set as true. ");
             row.d.set_var("n_claimed","1");
+
+            if(auth_org < 100) {
+                receiver = row.d.header.creator;
+            }
 
             sMemo = "Data type " + type.to_string() + " #" + to_string(count) + "  was claimed by " + approver.to_string() + " (strid: " + row.d.header.strid + ") ";
             print(sMemo);
@@ -569,7 +698,7 @@ void carboncert::_claim(const name& approver, const name& type, const uint64_t& 
         "transfer"_n,
         std::make_tuple(
             getcontract(),
-            approver,
+            receiver,
             aTokenIssue,
             sMemo
         )
@@ -585,7 +714,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
     name countvar         = name_null;
     vector<string> verify = {};
    
-    countvar = GLOBAL_COUNT_SNKI;
+    countvar = GLOBAL_COUNT_RETTAIL;
     verify   = VARDEF_CERT_CSNK_ISS;
 
     uint64_t count = getglobalint(countvar);
@@ -596,6 +725,9 @@ void carboncert::_retire(const name& approver, const asset& quant) {
     //while loop to reduce DATA_TYPE_CERT_SNKI
     asset aRetireRemain = quant;
     string sData_Ret = "";
+
+    uint64_t auth_org = get_org_id(approver);
+    uint8_t auth = get_auth_by_org(approver, auth_org);
 
     while(!bAllRetired) {
         //decrement csink amount
@@ -625,7 +757,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
                 aRetiredNew = aAvg;
                 row.d.set_var("n_retired","1");
                 aRetireRemain = asset(aRetireRemain.amount - nCertRemain, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-                count++;
+                count--;
                 setglobalint(countvar, count);
                 data_itr = _data_table.find(count);
             } else if ((aRetireRemain.amount - nCertRemain) == 0) {
@@ -634,7 +766,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
                 aRetiredNew = aAvg;
                 row.d.set_var("n_retired","1");
                 aRetireRemain = asset(0, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec"))));
-                count++;
+                count--;
                 setglobalint(countvar, count);
                 data_itr = _data_table.find(count);
                 bAllRetired = true;
@@ -648,7 +780,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
 
             row.d.set_var("a_qtyretired",aRetiredNew.to_string());
 
-            sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("n_prod_certn") + "," + row.d.get_var("n_ebc_cert") + "*";
+            sData_Ret = sData_Ret + to_string(row.id) + "," + asset(nQtyRetired, symbol(symbol_code(getglobalstr(name("tokensymbol"))), (uint8_t) getglobalint(name("tokenprec")))).to_string() + "," + row.d.get_var("u_prod_certn") + "," + row.d.get_var("u_ebc_certn") + "*";
     
         });
     }
@@ -665,7 +797,7 @@ void carboncert::_retire(const name& approver, const asset& quant) {
         countvar_ret = GLOBAL_COUNT_RET;
         verify_ret   = VARDEF_ACT_RETIRE;
 
-        uint64_t count_ret = getglobalint(countvar_ret) + 1;
+        uint64_t count_ret = getglobalint(countvar_ret) - 1;
 
         data_index _data_table_ret( get_self(), DATA_TYPE_ACT_RETR.value );
         auto data_itr_ret = _data_table_ret.find(count_ret);
@@ -676,16 +808,16 @@ void carboncert::_retire(const name& approver, const asset& quant) {
         string sDataRow = "a_retired|" + quant.to_string() + "|s_data|" + sData_Ret;
         string sToken = "|";
 
-        uint64_t auth_org = get_org_id(approver);
-        uint8_t auth = get_auth_by_org(approver, auth_org);
-
         _data_table_ret.emplace( get_self(), [&]( auto& row ) {
             row.id = count_ret;
             row.d  = struct_data(
-                        struct_header(count_ret, sSTRID, DATA_TYPE_ACT_RETR, approver, auth_org, STATUS_DATA_EXECUTED),
+                        struct_header(count_ret, sSTRID, DATA_TYPE_ACT_RETR, approver, auth_org, 0, STATUS_DATA_CORP_APPROVED),
                         sDataRow,
                         sToken
                    );
+
+            row.d.header.admin_approve(true);
+            row.d.header.executed(true);
 
             row.d.is_data_valid(verify_ret);
         });

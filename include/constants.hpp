@@ -16,6 +16,7 @@
     const name GLOBAL_COUNT_PRT     = name("portfolio");
     const name GLOBAL_COUNT_SND     = name("count.send");
     const name GLOBAL_COUNT_RET     = name("count.retire");
+    const name GLOBAL_COUNT_RETTAIL = name("count.rttail");
 
 
 

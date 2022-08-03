@@ -72,37 +72,46 @@ ACTION carboncert::sysdefaults() {
     if(getglobalint(GLOBAL_COUNT_EBC) == 0) 
     {
         delglobal(GLOBAL_COUNT_EBC);
-        setglobalint(GLOBAL_COUNT_EBC, 0);
+        setglobalint(GLOBAL_COUNT_EBC, 59000000);
     }
 
     if(getglobalint(GLOBAL_COUNT_PRO) == 0) 
     {
         delglobal(GLOBAL_COUNT_PRO);
-        setglobalint(GLOBAL_COUNT_PRO, 0);
+        setglobalint(GLOBAL_COUNT_PRO, 99999999999);
     }
 
     if(getglobalint(GLOBAL_COUNT_SNK) == 0) 
     {
         delglobal(GLOBAL_COUNT_SNK);
-        setglobalint(GLOBAL_COUNT_SNK, 0);
+        setglobalint(GLOBAL_COUNT_SNK, 999999999999);
     }
 
     if(getglobalint(GLOBAL_COUNT_SNKI) == 0) 
     {
         delglobal(GLOBAL_COUNT_SNKI);
-        setglobalint(GLOBAL_COUNT_SNKI, 0);
+        setglobalint(GLOBAL_COUNT_SNKI, 999999999999);
     }
 
     if(getglobalint(GLOBAL_COUNT_PRT) == 0) 
     {
         delglobal(GLOBAL_COUNT_PRT);
-        setglobalint(GLOBAL_COUNT_PRT, 0);
+        setglobalint(GLOBAL_COUNT_PRT, 999999999999);
+    }
+
+    if(getglobalint(GLOBAL_COUNT_RET) == 0) 
+    {
+        delglobal(GLOBAL_COUNT_RET);
+        setglobalint(GLOBAL_COUNT_RET, 999999999999);
+
+        delglobal(GLOBAL_COUNT_RETTAIL);
+        setglobalint(GLOBAL_COUNT_RETTAIL, 999999999999 - 1);
     }
 
     if(getglobalint(GLOBAL_COUNT_SND) == 0) 
     {
         delglobal(GLOBAL_COUNT_SND);
-        setglobalint(GLOBAL_COUNT_SND, 0);
+        setglobalint(GLOBAL_COUNT_SND, 999999999999);
     }
 
     setorg(get_self(), ORG_ADMIN_ID, "Administrator", 1, 1, 1);

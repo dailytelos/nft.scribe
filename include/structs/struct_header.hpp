@@ -22,6 +22,7 @@ struct struct_header {
     name      type;     //type of table object: "production", "bfcert", "send"
     name      creator;  //account that drafted the table object
     uint64_t  orgid;    //orgid to which creator belongs
+    uint64_t  reforgid; //orgid to which is referenced as relational (such as c-sink producer)
     uint8_t   status;   //value that denotes status of activity: STATUS_DATA_DRAFT, STATUS_DATA_CORP_APPROVED, etc.
     bool      locked;   //if true, record is locked and will not be modified
 
@@ -38,23 +39,25 @@ struct struct_header {
         locked = false;
     };
 
-    struct_header(uint64_t i_id, string i_strid, name i_type, name i_creator, uint64_t i_orgid, uint8_t i_status) {
+    struct_header(uint64_t i_id, string i_strid, name i_type, name i_creator, uint64_t i_orgid, uint64_t i_reforgid, uint8_t i_status) {
         id        = i_id;
         strid     = i_strid;
         type      = i_type;
         creator   = i_creator;
         orgid     = i_orgid;
+        reforgid  = i_reforgid;
         status    = i_status;
         locked    = false;
         draftdate = time_point_sec(current_time_point().sec_since_epoch());
     };
 
-    struct_header(uint64_t i_id, string i_strid, name i_type, name i_creator, uint64_t i_orgid, uint8_t i_status, time_point_sec i_draftdate) {
+    struct_header(uint64_t i_id, string i_strid, name i_type, name i_creator, uint64_t i_orgid, uint64_t i_reforgid, uint8_t i_status, time_point_sec i_draftdate) {
         id        = i_id;
         strid     = i_strid;
         type      = i_type;
         creator   = i_creator;
         orgid     = i_orgid;
+        reforgid  = i_reforgid;
         status    = i_status;
         locked    = false;
         draftdate = i_draftdate;
@@ -150,5 +153,5 @@ struct struct_header {
         }
     };
 
-    EOSLIB_SERIALIZE(struct_header, (id)(strid)(type)(creator)(orgid)(status)(locked)(draftdate)(submitdate)(corp_appr_date)(admin_appr_date)(deletedate)(lockdate)(executed_date));
+    EOSLIB_SERIALIZE(struct_header, (id)(strid)(type)(creator)(orgid)(reforgid)(status)(locked)(draftdate)(submitdate)(corp_appr_date)(admin_appr_date)(deletedate)(lockdate)(executed_date));
 };

@@ -94,17 +94,19 @@ struct struct_data {
                     //validate var
                     string sVType = asData[i2].substr(0, 2);
                     int64_t nTest;
+                    uint64_t uTest;
                     asset aTest;
                     time_point_sec tTest;
                     if(sVType == "s_") {}
                     else if(sVType == "n_") { nTest = (int64_t) stoi(asData[i2+1]); } //validates integer
+                    else if(sVType == "u_") { uTest = (uint64_t) stoull(asData[i2+1]); } //validates integer
                     else if(sVType == "a_") { aTest = _stoa(asData[i2+1]); 
                     
                     print("i[" + to_string(i) + "]:aTest=" + aTest.to_string()+"   /n ");
                     
                     } //validates asset
                     else if(sVType == "t_") { tTest = time_point_sec(time_point::from_iso_string(asData[i2+1])); } //validates ISO time
-                    else { check(false, "Invalid variable format, use s_, a_, n_, or t_.  "); }
+                    else { check(false, "Invalid variable format, use s_, a_, n_, u_ or t_.  "); }
                     nFound++;
                     break;
                 } //found
@@ -112,6 +114,23 @@ struct struct_data {
         }
 
         check(asVars.size() == nFound, "Validation of data string failed. ");
+    }
+
+    void check_org_match(uint64_t auth_org) {
+
+        if(auth_org == 5) {
+        } else {
+            check(header.orgid == auth_org, "Currently logged in user does not match data record orgid. ");
+        }
+    }
+
+    void check_reforg_match(uint64_t auth_org) {
+
+        if(auth_org == 5) {
+        } else {
+            check(header.reforgid != 0, "Invalid data record for reforgid. ");
+            check(header.reforgid == auth_org, "Currently logged in user does not match data record reforgid. ");
+        }
     }
 
     // string get_var(std::string sVarName)
@@ -168,6 +187,10 @@ struct struct_data {
 
     const int64_t get_var_as_int(std::string sVarName) {
         return (int64_t) stoi(get_var(sVarName));
+    }
+
+    const uint64_t get_var_as_uint(std::string sVarName) {
+        return (uint64_t) stoull(get_var(sVarName));
     }
 
     const time_point_sec get_var_as_time(std::string sVarName) {
