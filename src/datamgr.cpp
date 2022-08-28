@@ -851,6 +851,166 @@ void carboncert::_retire(const name& approver, const asset& quant) {
             sMemo
         )
     ).send();
+
+    /* INFO
+    This action controls a direct update to a RAM variable, this is great for oracles to use, or more advanced users. It is specifically to handle updates to variables. It provides for finer controls of uploading multiple operations at once and having vectors of uint128_t / int128_t / std::string / asset uploaded to the blockchain in one action.
+
+    signor (name) - EOSIO account to pay for all RAM, the authorized signor to update the variable.
+    scope (name) - EOSIO account (default contract setup must equal signor) to which the variable is scoped
+    varname (name) - EOSIO name used to register the variable in regvar ACTION
+    header (vectorstd::string) - Provides a column header description for the data in uval, sval, nval, aval, currently does nothing in the contract
+    operation (vectorstd::string) - Valid operations to perform on all data: set + - * / % min max
+    index (uint8_t) - Index of where to apply value and operation into uval sval and nval
+    uval (vector<uint128_t>) - Vector of uint128_t
+    sval (vectorstd::string) - Vector of std::string
+    nval (vector<int128_t>) - Vector of int128_t
+    aval (vectoreosio::asset) - Vector of asset
+    */
+    string s_type = "m";
+    string x_type = "x";
+    uint64_t tlimit = 36;
+    uint8_t vlimit = 8;
+    vector <std::string> s_oper;
+    s_oper.push_back("+");
+    s_oper.push_back("+");
+
+    uint8_t index = 0;
+
+
+   //global
+   vector <uint128_t> uval;
+   vector <std::string> sval;
+   vector <int128_t> nval;
+   vector <eosio::asset> aval;
+
+   aval.push_back(asset(0, symbol("COXC", 4)));  
+   aval.push_back(quant);
+
+    action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "regvar"_n,
+        std::make_tuple(
+            get_self(),
+            get_self(),
+            name("gcxstats"),
+            name("gcx"),
+            s_type,
+            tlimit,
+            vlimit
+        )
+    ).send();
+
+   vector <std::string> s_memo_this;
+   s_memo_this.push_back("COXC Total Global Issue");
+   s_memo_this.push_back("COXC Total Global Retire");
+
+      action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "update"_n,
+        std::make_tuple(
+            get_self(),
+            get_self(),
+            name("gcxstats"),
+            s_memo_this,
+            s_oper,
+            index,
+            uval,
+            sval,
+            nval,
+            aval
+        )
+    ).send();
+
+   //organisation
+    action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "regvar"_n,
+        std::make_tuple(
+            get_self(),
+            name(auth_org),
+            "cxtotals"_n,
+            "cxt"_n,
+            x_type,
+            tlimit,
+            vlimit
+        )
+    ).send();
+
+   s_memo_this.empty();
+   s_memo_this.push_back("COXC Total Org Issue");
+   s_memo_this.push_back("COXC Total Org Retire");
+
+    action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "update"_n,
+        std::make_tuple(
+            get_self(),
+            name(auth_org),
+            "cxtotals"_n,
+            s_memo_this,
+            s_oper,
+            index,
+            uval,
+            sval,
+            nval,
+            aval
+        )
+    ).send();
+
+    //regvar for dates
+    /*
+    Registers a new variable in TABLE vregister using varname under the scope. When specifying a type other than x, the signor can create RAM variable logging / mathematical operations by hour, day, month, year. This could be used to perform daily totals, monthly averages, daily lows, daily highs, etc. vardgt must be the unique 3 digit identifier for this variable.
+
+    signor (name) - EOSIO account to pay for all RAM, the authorized signor to update the variable.
+    scope (name) - EOSIO account (default contract setup must equal signor) to which the variable is scoped
+    varname (name) - EOSIO name used to register the variable in regvar ACTION
+    vardgt (name) - EOSIO name that is exactly 3 digits long when converted to string format. Inside TABLE vartable these digits will follow the type character in the row id: tXXXyymmddhh (the XXX position). As such, the three digits must be unique.
+    type (std::string) - x normal, h hourly, d daily, m monthly, n yearly. This value will comprise the first character of the id in TABLE vartable .
+    tlimit (uint64_t) - Max number of rows assigned to this variable (pertains to type = h d m n)
+    vlimit (uint8_t) - Inside each row, this is the maximum vector size for uval sval and nval
+    */
+
+    
+    action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "regvar"_n,
+        std::make_tuple(
+            get_self(),
+            name(auth_org),
+            "cxchart"_n,
+            "cxc"_n,
+            s_type,
+            tlimit,
+            vlimit
+        )
+    ).send();
+
+    s_memo_this.empty();
+    s_memo_this.push_back("COXC Monthly Issue");
+    s_memo_this.push_back("COXC Monthly Retire");
+
+    action(
+        permission_level{ get_self(), "active"_n},
+        "data.scribe"_n,
+        "update"_n,
+        std::make_tuple(
+            get_self(),
+            name(auth_org),
+            "cxchart"_n,
+            s_memo_this,
+            s_oper,
+            index,
+            uval,
+            sval,
+            nval,
+            aval
+        )
+    ).send();
 }
 
 
