@@ -1,124 +1,76 @@
-ACTION carboncert::sysglobalstr(name &var, string &sval) {
+//manage.cpp
+
+ACTION nftscribe::sysglobalstr(name &var, string &sval) {
     require_auth( get_self() );
 
     setglobalstr(var, sval);
 }
 
-ACTION carboncert::sysglobalint(name &var, uint64_t &nval) {
+ACTION nftscribe::sysglobalint(name &var, uint64_t &nval) {
     require_auth( get_self() );
     
-    //check(var.value != name("certcount").value, "Variable 'certcount' must not be modified.");
-
     setglobalint(var, nval);
 }
 
-ACTION carboncert::sysdefaults() {
+ACTION nftscribe::sysglobalast(name &var, asset &aval) {
     require_auth( get_self() );
     
+    setglobalast(var, aval);
+}
+
+ACTION nftscribe::sysdefaults() {
+    require_auth( get_self() );
+    
+    //used in checkfreeze - Global contract freezing functionality
+    // 1 - Freezes all public contract activity
+    // 2 - Freezes all admin & public contract activity,
+    //        only global variable functions remain open
+    delglobal(name("freeze"));
+    setglobalint(name("freeze"), 1);
+
+    // For system deposits / withdrawals
+    // Relates to payments made directly to this contract in TLOS.
+    delglobal(name("tokentbl.id"));
+    setglobalint(name("tokentbl.id"), 1);
+
     delglobal(name("tokencontr"));
-    setglobalstr(name("tokencontr"), "coxc.token");
+    setglobalstr(name("tokencontr"), "eosio.token");
 
     delglobal(name("tokensymbol"));
-    setglobalstr(name("tokensymbol"), "COXC");
-
-    delglobal(name("orgcontract"));
-    setglobalstr(name("orgcontract"), "coxc.cert");
+    setglobalstr(name("tokensymbol"), "TLOS");
 
     delglobal(name("tokenprec"));
     setglobalint(name("tokenprec"), 4);
-    
-    delglobal(name("issuefee"));
-    setglobalint(name("issuefee"), 4);
 
-    delglobal(name("freeze"));
-    setglobalint(name("freeze"), 0);
+    // add the above system token
+    //_sysaddtoken(...);
 
-    if(getglobalint(name("issuecertn")) == 0) 
-    {
-        delglobal(name("issuecertn"));
-        setglobalint(name("issuecertn"), 0);
-    }
-
-    if(getglobalint(name("retirecertn")) == 0) 
-    {
-        delglobal(name("retirecertn"));
-        setglobalint(name("retirecertn"), 0);
-    }
-
-    if(getglobalint(name("issuefeettl")) == 0) 
-    {
-        delglobal(name("issuefeettl"));
-        setglobalint(name("issuefeettl"), 0);
-    }
-
-    if(getglobalint(name("depositacct")) == 0) 
+    if(getglobalast(name("depositacct")).amount == 0) 
     {
         delglobal(name("depositacct"));
-        setglobalint(name("depositacct"), 0);
+        setglobalast(name("depositacct"), system_asset(0));
     }
 
-    if(getglobalint(name("usdval")) == 0) 
-    {
-        delglobal(name("usdval"));
-        setglobalint(name("usdval"), 0);
+    //Fees and Charges - Default Setup
+    delglobal(name("fee.nftserv"));
+    setglobalast(name("fee.nftserv"), system_asset(500000)); // 50 TLOS initial fee
+
+    //Oracle Balance Account - Collected Fees to Pay Oracles
+    if(getglobalast(name("acct.oracles")).amount == 0) {
+        delglobal(name("acct.oracles"));
+        setglobalast(name("acct.oracles"), system_asset(0));
     }
 
-    if(getglobalint(name("sgdval")) == 0) 
-    {
-        delglobal(name("sgdval"));
-        setglobalint(name("sgdval"), 0);
-    }
+    //Oracle tier 1 - BP with more than 34 mil votes
+    delglobal(name("orc.tierone"));
+    setglobalint(name("orc.tierone"), 34000000);
 
-    if(getglobalint(GLOBAL_COUNT_EBC) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_EBC);
-        setglobalint(GLOBAL_COUNT_EBC, 59000000);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_PRO) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_PRO);
-        setglobalint(GLOBAL_COUNT_PRO, 99999999999);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_SNK) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_SNK);
-        setglobalint(GLOBAL_COUNT_SNK, 999999999999);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_SNKI) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_SNKI);
-        setglobalint(GLOBAL_COUNT_SNKI, 999999999999);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_PRT) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_PRT);
-        setglobalint(GLOBAL_COUNT_PRT, 999999999999);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_RET) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_RET);
-        setglobalint(GLOBAL_COUNT_RET, 999999999999);
-
-        delglobal(GLOBAL_COUNT_RETTAIL);
-        setglobalint(GLOBAL_COUNT_RETTAIL, 999999999999 - 1);
-    }
-
-    if(getglobalint(GLOBAL_COUNT_SND) == 0) 
-    {
-        delglobal(GLOBAL_COUNT_SND);
-        setglobalint(GLOBAL_COUNT_SND, 999999999999);
-    }
-
-    setorg(get_self(), ORG_ADMIN_ID, "Administrator", 1, 1, 1);
-
+    //Oracle tier 2 - BP with more than 54 mil votes
+    delglobal(name("orc.tiertwo"));
+    setglobalint(name("orc.tiertwo"), 54000000);
 }
 
-ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
+ACTION nftscribe::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
     require_auth( get_self() );
     checkfreeze();
     if(acct.value == name("depositacct").value)
@@ -129,12 +81,20 @@ ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &
 
     check(quant.amount > 0, "Quantity must be greater than 0. ");
 
-    uint64_t bgtacct = getglobalint(acct);
-    check(bgtacct > 0, "No funds in account left to withdraw. ");
+    asset bgtacct = getglobalast(acct);
+ 
+        //check if assets match
+        check(bgtacct.symbol.code().to_string() == getglobalstr(name("tokensymbol")), "Invalid symbol_code for bgtacct. ");
+        check(bgtacct.symbol.code().to_string() == quant.symbol.code().to_string(), "Invalid symbol_code for quant. ");
+        
+        check(bgtacct.symbol.precision() == getglobalint(name("tokenprec")), "Invalid precision for bgtacct. ");
+        check(bgtacct.symbol.precision() == quant.symbol.precision(), "Invalid precision for quant. ");
+        
+    check(bgtacct.amount > 0, "No funds in account left to withdraw. ");
 
-    uint64_t withdraw = (uint64_t) quant.amount;
-    check((bgtacct >= withdraw), "There is not that much to withdraw. ");
-    uint64_t new_balance = bgtacct - withdraw;
+    int64_t withdraw = quant.amount;
+    check((bgtacct.amount >= withdraw), "There is not that much to withdraw. ");
+    int64_t new_balance = bgtacct.amount - withdraw;
 
     action(
     permission_level{ get_self(), "active"_n},
@@ -148,16 +108,16 @@ ACTION carboncert::sysdrawacct(name &acct, name &to, asset &quant, std::string &
         )
     ).send();
 
-    setglobalint(acct, new_balance);
+    setglobalast(acct, system_asset(new_balance));
 }
 
-ACTION carboncert::sysdeposit(name &user, asset &quant, string &memo) {
+ACTION nftscribe::sysdeposit(name &user, asset &quant, string &memo) {
     require_auth( get_self() );
     checkfreeze();
     adddeposit(user, quant, memo);
 }
 
-ACTION carboncert::sysdelglobal(name &var) {
+ACTION nftscribe::sysdelglobal(name &var) {
     require_auth( get_self() );
     checkfreeze();
 
@@ -169,14 +129,14 @@ ACTION carboncert::sysdelglobal(name &var) {
     delglobal(var);
 }
 
-ACTION carboncert::sysfreeze(uint64_t &freeze) {
+ACTION nftscribe::sysfreeze(uint64_t &freeze) {
     require_auth( get_self() );
 
     setglobalint(name("freeze"), freeze);
     print("Contract frozen state updated.");
 }
 
-ACTION carboncert::draw(name &user) {
+ACTION nftscribe::draw(name &user) {
     check(has_auth(user) || has_auth(get_self()), "Transaction missing required authority. ");
     checkfreeze();
     deposits_index _deposits( get_self(), get_self().value );
@@ -193,13 +153,13 @@ ACTION carboncert::draw(name &user) {
         check(sUnit == getglobalstr(name("tokensymbol")), "Balance account error, mismatch in symbol. ");
         check(nPrec == getglobalint(name("tokenprec")), "Balance account error, mismatch in precision. ");
 
-        uint64_t depositacct = getglobalint(name("depositacct"));
-        if(depositacct >= 0 )
+        asset depositacct = getglobalast(name("depositacct"));
+        if(depositacct.amount >= 0 )
         {
-            int64_t new_balance = depositacct - drawbal.amount;
-            check(new_balance >= 0, "Imbalance occurred, cannot withdraw beyond total in depositacct. (Imb: a) ");
+            asset new_balance = system_asset(depositacct.amount - drawbal.amount);
+            check(new_balance.amount >= 0, "Imbalance occurred, cannot withdraw beyond total in depositacct. (Imb: a) ");
             
-            setglobalint(name("depositacct"), new_balance);
+            setglobalast(name("depositacct"), new_balance);
         }
         else {
             check(false, "Imbalance occurred, cannot withdraw beyond total in depositacct. (Imb: b) ");
@@ -225,21 +185,21 @@ ACTION carboncert::draw(name &user) {
 // ************* private internal functions ***
 //********************************************
 
-void carboncert::checkfreeze() {
+void nftscribe::checkfreeze() {
 
     uint64_t nfreeze = getglobalint(name("freeze"));
 
     if(nfreeze == 0) { return; }
-    if(nfreeze == 1) //require carboncert to execute
+    if(nfreeze == 1) //require nftscribe to execute
     {
-        check(has_auth(get_self()), "carbon.cert is currently undergoing maintenance. ");
+        check(has_auth(get_self()), get_self().to_string() + " is currently undergoing maintenance. ");
         return;
     }
     if(nfreeze >= 2)
-    { check(false, "carbon.cert is currently undergoing maintenance. "); }
+    { check(false, get_self().to_string() + " is currently undergoing maintenance. "); }
 }
 
-string carboncert::getglobalstr(name var) {
+string nftscribe::getglobalstr(name var) {
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);
 
@@ -248,7 +208,7 @@ string carboncert::getglobalstr(name var) {
     return itr->sval;
 }
 
-void carboncert::setglobalstr(name var, string sval) {
+void nftscribe::setglobalstr(name var, string sval) {
 
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);
@@ -259,6 +219,7 @@ void carboncert::setglobalstr(name var, string sval) {
             global_row.var  = var;
             global_row.sval   = sval;
             global_row.nval   = 0;
+            global_row.aval   = asset(0, symbol(symbol_code("NULL"), 4));
 
             //print("Variable added: " + var.to_string() + " - " + sval);
         });
@@ -272,7 +233,7 @@ void carboncert::setglobalstr(name var, string sval) {
     }
 }
 
-uint64_t carboncert::getglobalint(name var) {
+uint64_t nftscribe::getglobalint(name var) {
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);
 
@@ -281,7 +242,7 @@ uint64_t carboncert::getglobalint(name var) {
     return itr->nval;
 }
 
-void carboncert::setglobalint(name var, uint64_t nval) {
+void nftscribe::setglobalint(name var, uint64_t nval) {
 
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);
@@ -292,6 +253,7 @@ void carboncert::setglobalint(name var, uint64_t nval) {
             global_row.var  = var;
             global_row.sval   = "";
             global_row.nval   = nval;
+            global_row.aval   = asset(0, symbol(symbol_code("NULL"), 4));
 
             //print("Variable added: " + var.to_string() + " - " + to_string(nval));
         });
@@ -305,7 +267,43 @@ void carboncert::setglobalint(name var, uint64_t nval) {
     }
 }
 
-void carboncert::delglobal(name var) {
+
+asset nftscribe::getglobalast(name var) {
+    global_index _globals( get_self(), get_self().value );
+    auto itr = _globals.find(var.value);
+
+    if(itr == _globals.end()) { return asset(0, symbol(symbol_code("NULL"), 4)); }
+
+    return itr->aval;
+}
+
+void nftscribe::setglobalast(name var, asset aval) {
+
+    global_index _globals( get_self(), get_self().value );
+    auto itr = _globals.find(var.value);
+
+    if(itr == _globals.end()) {
+        //create new record
+         _globals.emplace( get_self(), [&]( auto& global_row ) {
+            global_row.var  = var;
+            global_row.sval   = "";
+            global_row.nval   = 0;
+            global_row.aval   = aval;
+
+            //print("Variable added: " + var.to_string() + " - " + to_string(nval));
+        });
+    }
+    else { //modify record
+        _globals.modify( itr, get_self(), [&]( auto& global_row ) {
+            global_row.aval = aval;
+
+            //print("Variable changed: " + var.to_string() + " - " + to_string(nval));
+        });
+    }
+}
+
+
+void nftscribe::delglobal(name var) {
 
     global_index _globals( get_self(), get_self().value );
     auto itr = _globals.find(var.value);
@@ -316,19 +314,13 @@ void carboncert::delglobal(name var) {
 	}
 }
 
-name carboncert::getcontract() {
+name nftscribe::getcontract() {
     string sname = getglobalstr(name("tokencontr"));
 
     return name(sname);
 }
 
-name carboncert::getorgcontract() {
-    string sname = getglobalstr(name("orgcontract"));
-
-    return name(sname);
-}
-
-void carboncert::adddeposit(name &user, asset &quant, string &memo) {
+void nftscribe::adddeposit(const name &user, const asset &quant, const string &memo) {
 
     int64_t nAmt = quant.amount;
     symbol_code cUnit = quant.symbol.code();
@@ -348,8 +340,8 @@ void carboncert::adddeposit(name &user, asset &quant, string &memo) {
             deposit_row.user     = user;
             deposit_row.quant    = quant;
             deposit_row.memo     = memo;
-            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) + nAmt;
-            setglobalint(name("depositacct"), depositacct);
+            asset depositacct = system_asset(getglobalast(name("depositacct")).amount + nAmt);
+            setglobalast(name("depositacct"), depositacct);
         });
     }
     else { //modify record
@@ -357,14 +349,14 @@ void carboncert::adddeposit(name &user, asset &quant, string &memo) {
             int64_t new_amount = nAmt + deposit_row.quant.amount;
             deposit_row.quant.amount = new_amount;
             deposit_row.memo = "*Multiple* - Last Tran: " + memo;
-            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) + nAmt;
-            setglobalint(name("depositacct"), depositacct);
+            asset depositacct = system_asset(getglobalast(name("depositacct")).amount + nAmt);
+            setglobalast(name("depositacct"), depositacct);
         });
     }
 }
 
 
-void carboncert::subdeposit(name &user, asset &quant) {
+void nftscribe::subdeposit(const name &user, const asset &quant) {
 
     int64_t nAmt = quant.amount;
     symbol_code cUnit = quant.symbol.code();
@@ -388,14 +380,14 @@ void carboncert::subdeposit(name &user, asset &quant) {
             int64_t new_amount = deposit_row.quant.amount - nAmt;
             deposit_row.quant.amount = new_amount;
             //deposit_row.memo = "*Multiple* - Last Tran: " + memo;
-            check((getglobalint(name("depositacct")) - nAmt) > 0, "Unable to modify deposits, depositacct fell to 0. ");
-            uint64_t depositacct = (uint64_t) getglobalint(name("depositacct")) - nAmt;
-            setglobalint(name("depositacct"), depositacct);
+            check((getglobalast(name("depositacct")).amount - nAmt) > 0, "Unable to modify deposits, depositacct fell to 0. ");
+            asset depositacct = system_asset(getglobalast(name("depositacct")).amount - nAmt);
+            setglobalast(name("depositacct"), depositacct);
         });
     }
 }
 
-void carboncert::deldeposit(name &user) {
+void nftscribe::deldeposit(const name &user) {
 
     deposits_index _deposits( get_self(), get_self().value );
     auto itr = _deposits.find(user.value);
@@ -405,7 +397,7 @@ void carboncert::deldeposit(name &user) {
     itr = _deposits.erase( itr ); //remove row
 }
 
-asset carboncert::getdepamt(name &user) {
+asset nftscribe::getdepamt(const name &user) {
 
     deposits_index _deposits( get_self(), get_self().value );
     auto itr = _deposits.find(user.value);
@@ -417,7 +409,7 @@ asset carboncert::getdepamt(name &user) {
     }
 }
 
-string carboncert::getdepmemo(name &user) {
+string nftscribe::getdepmemo(const name &user) {
 
     deposits_index _deposits( get_self(), get_self().value );
     auto itr = _deposits.find(user.value);
@@ -430,4 +422,11 @@ string carboncert::getdepmemo(name &user) {
     }
 
     return sRet;
+}
+
+asset nftscribe::system_asset(int64_t amount) {
+    symbol_code sym_code = symbol_code(getglobalstr(name("tokensymbol")));
+    uint8_t prec         = getglobalint(name("tokenprec"));
+
+    return asset(amount, symbol(sym_code, prec));
 }

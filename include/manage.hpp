@@ -5,6 +5,7 @@ public:
 // admin contract management
 ACTION sysglobalstr(name &var, string &sval);
 ACTION sysglobalint(name &var, uint64_t &nval);
+ACTION sysglobalast(name &var, asset &aval);
 ACTION sysdefaults();
 ACTION sysdrawacct(name &acct, name &to, asset &quant, std::string &memo); 
 ACTION sysdeposit(name &user, asset &quant, string &memo); 
@@ -21,19 +22,22 @@ string getglobalstr(name var);
 void setglobalstr(name var, string sval);
 uint64_t getglobalint(name var);
 void setglobalint(name var, uint64_t nval);
+asset getglobalast(name var);
+void setglobalast(name var, asset aval);
 void delglobal(name var);
 name getcontract();
-name getorgcontract();
-void adddeposit(name &user, asset &quant, string &memo);
-void subdeposit(name &user, asset &quant);
-void deldeposit(name &user);
-asset getdepamt(name &user);
-string getdepmemo(name &user);
+void adddeposit(const name &user, const asset &quant, const string &memo);
+void subdeposit(const name &user, const asset &quant);
+void deldeposit(const name &user);
+asset getdepamt(const name &user);
+string getdepmemo(const name &user);
+asset system_asset(int64_t amount);
 
 TABLE globalvars {
     name          var;
     string        sval;
     uint64_t      nval;
+    asset         aval;
 
     auto primary_key() const { return var.value; };
 };
