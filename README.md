@@ -1,3 +1,6 @@
+# Work in Process code!
+- Certainly there are bugs in this code, not ready for production yet.
+
 # NFT Virtual Accounts on Telos Native (tNFT)
 
 **nft.scribe** is the Telos native oracle contract, relaying data from other blockchains such as Ethereum,
