@@ -1,45 +1,105 @@
 # Work in Process code!
-- Certainly there are bugs in this code, not ready for production yet.
+- There are bugs in this code, not ready for production yet.
 
-# NFT Virtual Accounts on Telos Native (tNFT)
+---
 
-**nft.scribe** is the Telos native oracle contract, relaying data from other blockchains such as Ethereum,
-permitting users to login using their Ethereum NFT's, and perform actions on Telos Native.
+# NFT.scribe: Bridging the NFT Multiverse on Telos
 
-This oracle relay creates a framework for gas-free Virtual Accounts on Telos Native, which is great for the operation of gas-free governance models on Telos Native by projects.  It is a great selling-point for existing Ethereum NFT projects, to transition their governance / staking to Telos Native.
+**NFT.scribe** is a versatile Telos C++ smart contract designed to bridge the realms of Non-Fungible Tokens (NFTs)
+across different networks. Through a series of specialized modules, the contract enables users to register NFTs, manage cross-chain NFT details,
+and engage with oracle-driven post actions. Coupled with a user-centric approach,
+it provides network management features and fosters an integrated ecosystem for NFT aficionados and developers alike.
+Our contract ensures a seamless experience for interoperability and functionalities vital for the thriving NFT community on the Telos platform.
 
-## KEY FEATURES
-- Unlocks the power of Telos Native for Ethereum, BSC, and other EVM chains
-- Contract Owners can register their NFT project officially
-- Others can register their individual NFT to participate
-- Registered NFT's receive a Telos Native Virtual Account (tNFT), secured by multi-sig oracle network
-- Invalid transactions are publicly verifiable as invalid, contract code in the future could even be upgraded to enforce only a valid signature is posted
--------------
-## PROCESS
-1. NFT Owner initiates a SignTypedDataV4 with Oracle API Server: https://docs.metamask.io/guide/signing-data.html#signtypeddata-v4
-2. Oracle verifies they in fact own the NFT via public contract access
-3. Oracle posts to Telos Native, their public key, their signed data, and their unsigned data
-4. Oracles all vote on the transaction, if they likewise agree the data was signed by that key, and that this key in fact owns the NFT
-5. Once a configured multi-sig threshold is reached at a 70% threshold, such as 5 out of 7 oracles agree, the data of the transaction is read by the nft.scribe contract and executed according to the data provided
-6. nft.scribe interfaces into other Telos Native contracts where the actions are specifically approved by the contract
--------------
+---
+---
 
-## tNFT Virtual Account Interoperability
-- tNFT accounts use the "nft" permission from the nft.scribe contract (nft.scribe@nft)
-- The nft.scribe@nft permission will call other actions on Telos Native, and this will be secure because the call will fail unless both linkauth is configured, and the ACTION is setup to deal with tNFT accounts
-- A project can setup its own interfaces for linkauth, so long as the action name begins with "nft"
-- Oracles can multi-sig add other actions that do not begin with "nft", but they'll likewise hold the permission and function definition limitations of tNFT accounts
-- System calls "eosio" and similar, will not be accessable to virtual accounts
-- "eosio.token" and the transfer command will be accessable to virtual accounts under their virtual wallet
+# manage.hpp
+## Public Contract Management
+### Actions
+- sysglobalstr(`name &var`, `string &sval`)
+- sysglobalint(`name &var`, `uint64_t &nval`)
+- sysglobalast(`name &var`, `asset &aval`)
+- sysdefaults()
+- sysdrawacct(`name &acct`, `name &to`, `asset &quant`, `std::string &memo`)
+- sysdeposit(`name &user`, `asset &quant`, `string &memo`)
+- sysdelglobal(`name &var`)
+- sysfreeze(`uint64_t &freeze`)
+- draw(`name &user`)
+### Tables
+- globalvars (`name var`, `string sval`, `uint64_t nval`, `asset aval`, `time_point_sec ts`, `string memo`)
+- deposits (`name account`, `asset total`, `asset available`)
 
--------------
-## PROJECT REGISTRATION TIERS
--------------
-- Project registration, collects 
+---
 
-## TODO
--------------
-- Oracle Posting
-- Oracle Rotation of Account @active permissions
-- Execution of Approved Posting
-- Virtual Accounts
+# networks.hpp
+## Actions
+- netwreg(`const name& id`, `const string& title`, `const string& chain_id`, `const string& ticker`, `const string& block_expl`)
+- netwactive(`const name& id`, `const uint8_t& active`)
+- netwthresh(`const name& id`, `const uint16_t& threshold`)
+## Table
+- networks (`name id`, `string title`, `string chain_id`, `string ticker`, `string block_expl`, `uint8_t active`, `uint16_t threshold`)
+
+---
+
+# nftservice.hpp
+## Actions
+- nftregister(`const name& auth`, `const name& suffix`, `const name& network_id`, `const string& nftcontract`, `const vector <string>& contracts`, `const name& admin`, `const string& website`,  `const string& admin_email`)
+- nftactive(`const name& auth`, `const name& suffix`, `const name& network_id`, `const uint8_t& active`)
+- nftaddtoken(`const name& auth`, `const name& suffix`, `const name& network_id`, `const uint64_t& token_id`)
+- nftdeltoken(`const name& auth`, `const name& suffix`, `const name& network_id`, `const uint64_t& token_id`)
+## Table
+- nftservice (`name auth`, `name suffix`, `name network_id`, `string nftcontract`, `vector<string> contracts`, `name admin`, `string website`, `string admin_email`, `uint8_t active`, `vector<uint64_t> tokens`)
+
+---
+
+# nftusers.hpp
+## Table
+- nftusers (`name user`, `vector<uint128_t> nft_ids`, `vector<name> network_ids`, `vector<uint64_t> posts_ids`)
+
+---
+
+# oracles.hpp
+## Actions
+- orcregister(`const name& auth`, `const name& oracle_id`, `const name& network_id`, `const string& apisource`)
+- orcstatus(`const name& oracle_id`, `const name& network_id`, `const int8_t& active`)
+- orckick(`const name& auth`, `const name& oracle_id`, `const name& network_id`, `const uint32_t& hours`)
+- orcban(`const name& auth`, `const name& oracle_id`, `const name& network_id`, `const uint8_t& ban`)
+- orcrefresh(`const name& auth`, `const name& oracle_id`, `const name& network_id`)
+- orcpost(`const name& oracle_id`, `const struct_post& cPost`)
+## Table
+- oracles (`name oracle_id`, `name network_id`, `string apisource`, `int8_t active`, `uint32_t hours`, `uint8_t ban`, `time_point_sec refresh_time`, `vector<uint64_t> posts_ids`)
+
+---
+
+# posts.hpp
+## Actions
+- post(
+  `const name& oracle_id`,
+  `const name& network_id`,
+  `const name& suffix`,
+  `const name& contract`,
+  `const name& post_action`,
+  `const name& userid`,
+  `const uint16_t& sign_type`,
+  `const string& eth_pub_key`,
+  `const uint128_t& nft_id`,
+  `const string& unsigned_data`,
+  `const string& signed_data`,
+  `const time_point_sec& tps_posted`,
+  `const time_point_sec& tps_created`,
+  `const time_point_sec& tps_expires`
+)
+- upvote(`const name& oracle_id`, `const name& network_id`, `const uint64_t& posts_id`)
+- downvote(`const name& oracle_id`, `const name& network_id`, `const uint64_t& posts_id`)
+## Table
+- posts (`name oracle_id`, `name network_id`, `name suffix`, `name contract`, `name post_action`, `name userid`, `uint16_t sign_type`, `string eth_pub_key`, `uint128_t nft_id`, `string unsigned_data`, `string signed_data`, `time_point_sec tps_posted`, `time_point_sec tps_created`, `time_point_sec tps_expires`, `uint16_t votes`)
+
+---
+
+# tokens.hpp
+## Actions
+- sysaddtoken(`const uint64_t& id`, `const name& contract`, `const string& sym_code`, `const uint8_t& prec`)
+- sysdeltoken(`const uint64_t& id`)
+## Table
+- tokenstbl (`uint64_t id`, `name contract`, `string sym_code`, `uint8_t prec`)
