@@ -170,10 +170,18 @@
     }
 
     void nftscribe::_orcpost(const name& oracle_id, const struct_post& cPost) {
-        //scope is cPost.network_id
+        uint128_t nPostId = get_post_count(cPost.network_id);
 
-        // ** add code here
+        post_index posts(get_self(), cPost.network_id.value);
+
+        posts.emplace(oracle_id, [&](auto& p) {
+            p.id = nPostId;
+            p.post = cPost;
+        });
+
+        incr_post_count(cPost.network_id);
     }
+
 
     nftscribe::struct_oracle nftscribe::get_oracle(const name& oracle_id, const name& network_id) {
         name scope = network_id; 
