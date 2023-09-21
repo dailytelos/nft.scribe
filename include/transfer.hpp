@@ -44,15 +44,7 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
 
         name suffix = name(aSplit2[1]);
 
-        // secondary key by_contract_and_symbol() to search TABLE tokenstbl in tokens.hpp
-        uint128_t combined_key = (static_cast<uint128_t>(contract.value) << 64) | static_cast<uint128_t>(symbol_code(cUnit).raw());
-
-        // Check for matching token using the secondary key
-        auto existing_token = _tokens_table.get_index<name("contractsym")>();
-        auto token_itr = existing_token.find(combined_key);
-        check(token_itr != existing_token.end(), "Token cannot be sent to this contract, it was not registered to the list of accepted tokens. ");
-
-        struct_token cToken = struct_token(token_itr->t.id, contract, quant, sUnit, nPrec);
+        struct_token cToken = gettoken(contract, cUnit);
 
         _nftuser_token_transfer_in(network_id, userid, cToken, memo);
     }

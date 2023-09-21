@@ -29,6 +29,44 @@ struct struct_post {
     time_point_sec tps_created;     //date when the signor claimed they signed in metamask / wallet
     time_point_sec tps_expires;     //post expires after this time, set by the signor
 
+    struct struct_exe {
+        name contract;
+        name action;
+
+        name name_a;
+        name name_b;
+
+        uint64_t uint_a;
+        uint64_t uint_b;
+
+        int64_t int_a;
+        int64_t int_b;
+
+        string str_a;
+        string str_b;
+
+        asset a_token;
+        
+        // Default constructor
+        struct_exe() {}
+
+        // Parameterized constructor
+        struct_exe(name i_contract, name i_action, 
+                        name i_name_a, name i_name_b, 
+                        uint64_t i_uint_a, uint64_t i_uint_b, 
+                        int64_t i_int_a, int64_t i_int_b, 
+                        string i_str_a, string i_str_b, 
+                        asset i_a_token) 
+            : contract(i_contract), action(i_action), 
+            name_a(i_name_a), name_b(i_name_b), 
+            uint_a(i_uint_a), uint_b(i_uint_b), 
+            int_a(i_int_a), int_b(i_int_b), 
+            str_a(i_str_a), str_b(i_str_b), 
+            a_token(i_a_token) {}
+
+        EOSLIB_SERIALIZE(struct_exe, (contract)(action)(name_a)(name_b)(uint_a)(uint_b)(int_a)(int_b)(str_a)(str_b)(a_token));
+    };
+
     struct_post() {
         id           = 0;
         network_id   = name(NAME_NULL);
@@ -71,7 +109,38 @@ struct struct_post {
         tps_created  = i_tps_created;
         tps_expires  = i_tps_expires;
     };
-        
+            
+    struct_exe exe_out() {
+        string exe_data_string = parse_json(unsigned_data, "exe_data");
+        vector<string> parts;
+
+        size_t start = 0;
+        size_t end = exe_data_string.find(',');
+
+        while (end != string::npos) {
+            parts.push_back(exe_data_string.substr(start, end - start));
+            start = end + 1;
+            end = exe_data_string.find(',', start);
+        }
+        parts.push_back(exe_data_string.substr(start, end));
+
+        eosio::check(parts.size() >= 9, "Invalid data format"); // Ensure there are enough parts to avoid out-of-bounds errors
+
+        return struct_exe(
+            contract,               
+            post_action,                
+            eosio::name(parts[0]),      
+            eosio::name(parts[1]),       
+            stoull(parts[2]),            
+            stoull(parts[3]),            
+            stoll(parts[4]),           
+            stoll(parts[5]),             
+            parts[6],                    
+            parts[7],                    
+            stoa(parts[8])               
+        );
+    }
+
     void upvote(name i_oracle_id) {
         // Check if i_oracle_id is already in the upvotes vector
         auto itr = std::find(upvotes.begin(), upvotes.end(), i_oracle_id);
@@ -225,6 +294,49 @@ struct struct_post {
 
         return result;
     }
+
+    vector<string> split(string str, string token){
+        vector<string>result;
+        while(str.size()){
+            int index = str.find(token);
+            if(index!=string::npos){
+                result.push_back(str.substr(0,index));
+                str = str.substr(index+token.size());
+                if(str.size()==0)result.push_back(str);
+            }else{
+                result.push_back(str);
+                str = "";
+            }
+        }
+        return result;
+    }
+
+
+    asset stoa(string s) {
+        vector<string> data = split(s, " ");
+        check(data.size() == 2, "Improper data sent to stoa(s). ");
+        string sSC = data[1];
+        symbol_code sc = symbol_code(sSC);
+        check(sc.to_string().size() >= 1, "Improper data sent to stoa(s). ");
+        vector<string> amount = split(data[0], ".");
+
+        string sAmount = "";
+        uint8_t precision = 0;
+
+        if(amount.size() == 1) { // precision is 0
+            sAmount = amount[0];
+        } else if (amount.size() == 2) {  // set precision
+            precision = (uint8_t) amount[1].size();  //string length is the precision
+            sAmount = amount[0] + amount[1];
+        } else { //error
+            check(false, "Improper data sent to stoa(s). ");
+        }
+
+        int64_t nAmount = stoi(sAmount);
+
+        return asset(nAmount, symbol(sc, precision)); 
+    }
+
 
     EOSLIB_SERIALIZE(struct_post, (id)(network_id)(suffix)(post_action)(userid)(posted_by)(sign_type)(pub_key)(nft_id)(unsigned_data)(signed_data)(upvotes)(downvotes)(tps_posted)(tps_created)(tps_expires));
 };

@@ -5,6 +5,8 @@
     ACTION netwreg(const name& id, const string& title, const string& chain_id, const string& ticker, const string& block_expl);
 
     ACTION netwactive(const name& id, const uint8_t& active);
+
+    ACTION netwthresh(const name& id, const uint16_t& threshold);
     
   private:
 
@@ -12,7 +14,11 @@
 
     void _netwactive(const name& id, const uint8_t& active);
 
+    void _netwthresh(const name& id, const uint16_t& threshold);
+
     bool netw_is_active(name id);
+
+    uint16_t get_threshold(const name& id);
 
     uint128_t get_post_count(const name& id);
 
@@ -25,6 +31,7 @@
       string chain_id;     //such as : 1 (eth.main) or 40 (telos.evm), max 256 chars, respective to network identification https://chainlist.org/
       uint8_t active;      //1 = operational, 0 = disabled by contract admins, disabled has NFT registrations disabled, oracle updates disabled
       string ticker;       //network currency ticker such as "TLOS" or "ETH", max 32
+      uint16_t threshold;  //# of oracles needed to upvote a post before execution of action, if downvotes requires 70%
       string block_expl;   //block explorer link, such as:  https://www.teloscan.io, max 256 chars
       uint128_t post_count;  //counts the number of oracle posts to the chain, and is used as an index for TABLE posts
 

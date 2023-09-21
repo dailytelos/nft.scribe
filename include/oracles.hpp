@@ -41,6 +41,8 @@
 
     uint64_t get_orctier(const name& oracle_id);
 
+    uint64_t get_oracle_threshold(const name& network_id);
+
     // scope: TABLE networks->id
     //  per default: "eth.mainnet" will be the default network determining contract permissions
     TABLE oracles {

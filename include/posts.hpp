@@ -46,6 +46,8 @@
 
   void _downvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id);
 
+  bool has_post_met_threshold(const name& network_id, const uint64_t& posts_id);
+
     // scope: TABLE networks->id
     //  per default: "eth.mainnet" will be the default network determining contract permissions
     TABLE posts {

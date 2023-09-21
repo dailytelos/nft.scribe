@@ -13,7 +13,7 @@ private:
 
     void _nftuser_token_transfer_internal(name netw_id_from, name userid_from, name netw_id_to, name userid_to, struct_token cToken, string sMemo, struct_post cPost);
 
-    void _nftuser_exe_native(name netw_id_exe, name userid_exe, struct_exe_native cExe, struct_post cPost);
+    void _nftuser_exe_native(name netw_id_exe, name userid_exe, struct_post::struct_exe cExe, struct_post cPost);
 
 
     // scope: TABLE networks->id

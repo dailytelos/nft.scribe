@@ -19,6 +19,12 @@ ACTION nftscribe::netwactive(const name& id, const uint8_t& active) {
     _netwactive(id, active);
 }
 
+ACTION nftscribe::netwthresh(const name& id, const uint16_t& threshold) {
+    require_auth(get_self());
+
+    _netwthresh(id, threshold);
+}
+
 void nftscribe::_netwreg(const name& id, const string& title, const string& chain_id, const string& ticker, const string& block_expl) {
     
     name scope = get_self(); //contract is scope in this case
@@ -63,6 +69,19 @@ void nftscribe::_netwactive(const name& id, const uint8_t& active) {
     }
 }
 
+
+void nftscribe::_netwthresh(const name& id, const uint16_t& threshold) {
+    networks_index _networks_table(get_self(), get_self().value);
+    auto network_itr = _networks_table.find(id.value);
+
+    eosio::check(network_itr != _networks_table.end(), "Network not found.");
+    eosio::check(threshold > 0, "Threshold must be greater than zero.");
+
+    _networks_table.modify(network_itr, get_self(), [&](auto& network) {
+        network.threshold = threshold;
+    });
+}
+
 bool nftscribe::netw_is_active(name id) {
     
     name scope = get_self(); //contract is scope in this case
@@ -74,6 +93,15 @@ bool nftscribe::netw_is_active(name id) {
     }
 
     return false;
+}
+
+uint16_t nftscribe::get_threshold(const name& id) {
+    networks_index _networks_table(get_self(), get_self().value);
+    auto network_itr = _networks_table.find(id.value);
+
+    eosio::check(network_itr != _networks_table.end(), "Network not found.");
+
+    return network_itr->threshold;
 }
 
 uint128_t nftscribe::get_post_count(const name& id) {

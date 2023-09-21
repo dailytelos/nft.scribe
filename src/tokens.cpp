@@ -113,3 +113,21 @@
 
         return cToken;
     }
+
+    nftscribe::struct_token nftscribe::gettoken(const name& contract, const symbol_code& sym_code) {
+
+        name scope = get_self();
+        tokens_index _tokens_table(get_self(), scope.value);
+
+        // Use the secondary index for searching
+        auto existing_token = _tokens_table.get_index<name("contractsym")>();
+        
+        // Combine the contract name and the symbol to form a unique key
+        uint128_t combined_key = (static_cast<uint128_t>(contract.value) << 64) | sym_code.raw();
+
+        auto token_itr = existing_token.find(combined_key);
+        check(token_itr != existing_token.end(), "Token cannot be sent to this contract, it was not registered to the list of accepted tokens.");
+
+        struct_token cToken = token_itr->t;
+        return cToken;
+    }

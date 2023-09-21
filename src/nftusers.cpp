@@ -72,7 +72,7 @@ void nftscribe::_nftuser_token_transfer_internal(name netw_id_from, name userid_
     _nft_incr_token(to_user_itr->u.suffix, netw_id_to, cToken); // Modified here
 }
 
-void nftscribe::_nftuser_exe_native(name netw_id_exe, name userid_exe, struct_exe_native cExe, struct_post cPost) {
+void nftscribe::_nftuser_exe_native(name netw_id_exe, name userid_exe, struct_post::struct_exe cExe, struct_post cPost) {
     // Open the nftuser_index with the given scope
     nftuser_index users(netw_id_exe, netw_id_exe.value);
 

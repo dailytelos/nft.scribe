@@ -27,7 +27,6 @@ CONTRACT nftscribe : public contract {
     #include "./structs/struct_token.hpp"
     #include "./structs/struct_oracle.hpp"
     #include "./structs/struct_post.hpp"
-    #include "./structs/struct_exe_native.hpp"
     #include "./structs/struct_nft_user.hpp"
 
     #include "./manage.hpp"

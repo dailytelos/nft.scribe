@@ -18,6 +18,8 @@
 
     struct_token gettoken(const uint64_t& id);
 
+    struct_token gettoken(const name& contract, const symbol_code& sym_code);
+
     // scope: get_self()
     TABLE tokenstbl {
         uint64_t id;                     //id of the token
