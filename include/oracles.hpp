@@ -19,7 +19,7 @@
 
     ACTION orcrefresh(const name& auth, const name& oracle_id, const name& network_id);
 
-    ACTION orcpost(const name& oracle_id, const name& network_id, const name& suffix, const uint16_t& sign_type, const string& pub_key, const string& unsigned_data, const string& signed_data);
+    ACTION orcpost(const name& oracle_id, const struct_post& cPost);
 
   private:
 
@@ -33,8 +33,8 @@
 
     void _orcrefresh(const name& auth, const name& oracle_id, const name& network_id);
 
-    void _orcpost(const name& oracle_id, const name& network_id, const name& suffix, const uint16_t& sign_type, const string& pub_key, const string& unsigned_data, const string& signed_data);
-    
+    void _orcpost(const name& oracle_id, const struct_post& cPost);
+
     struct_oracle get_oracle(const name& oracle_id, const name& network_id);
 
     uint64_t get_orcbpvotes(const name& oracle_id);

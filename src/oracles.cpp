@@ -163,28 +163,16 @@
         }
     }
 
-    ACTION nftscribe::orcpost(const name& oracle_id, const name& network_id, const name& suffix, const uint16_t& sign_type, const string& pub_key, const string& unsigned_data, const string& signed_data) {
+    ACTION nftscribe::orcpost(const name& oracle_id, const struct_post& cPost) {
         require_auth(oracle_id);
 
-        _orcpost(oracle_id, network_id, suffix, sign_type, pub_key, unsigned_data, signed_data);
+        _orcpost(oracle_id, cPost);
     }
 
-    void nftscribe::_orcpost(const name& oracle_id, const name& network_id, const name& suffix, const uint16_t& sign_type, const string& pub_key, const string& unsigned_data, const string& signed_data) {
-        
-        name scope = network_id; 
-        oracle_index _orc_table( get_self(), scope.value );
-        auto orc_itr = _orc_table.find(oracle_id.value);
+    void nftscribe::_orcpost(const name& oracle_id, const struct_post& cPost) {
+        //scope is cPost.network_id
 
-        if(orc_itr == _orc_table.end()){
-            check(false, "No such oracle_id is registered on this network. ");
-        } else {
-            _orc_table.modify( orc_itr, get_self(), [&]( auto& row ) {
-                row.oracle.update();
-                row.oracle.posted();
-
-
-            });
-        }
+        // ** add code here
     }
 
     nftscribe::struct_oracle nftscribe::get_oracle(const name& oracle_id, const name& network_id) {
