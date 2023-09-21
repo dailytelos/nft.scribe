@@ -66,7 +66,6 @@ Our contract ensures a seamless experience for interoperability and functionalit
 - orckick(`const name& auth`, `const name& oracle_id`, `const name& network_id`, `const uint32_t& hours`)
 - orcban(`const name& auth`, `const name& oracle_id`, `const name& network_id`, `const uint8_t& ban`)
 - orcrefresh(`const name& auth`, `const name& oracle_id`, `const name& network_id`)
-- orcpost(`const name& oracle_id`, `const struct_post& cPost`)
 ## Table
 - oracles (`name oracle_id`, `name network_id`, `string apisource`, `int8_t active`, `uint32_t hours`, `uint8_t ban`, `time_point_sec refresh_time`, `vector<uint64_t> posts_ids`)
 

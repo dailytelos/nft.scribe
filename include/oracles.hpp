@@ -19,8 +19,6 @@
 
     ACTION orcrefresh(const name& auth, const name& oracle_id, const name& network_id);
 
-    ACTION orcpost(const name& oracle_id, const struct_post& cPost);
-
   private:
 
     void _orcregister(const name& auth, const name& oracle_id, const name& network_id, const string& apisource);
@@ -32,8 +30,6 @@
     void _orcban(const name& auth, const name& oracle_id, const name& network_id, const uint8_t& ban);
 
     void _orcrefresh(const name& auth, const name& oracle_id, const name& network_id);
-
-    void _orcpost(const name& oracle_id, const struct_post& cPost);
 
     struct_oracle get_oracle(const name& oracle_id, const name& network_id);
 

@@ -162,27 +162,7 @@
             });
         }
     }
-
-    ACTION nftscribe::orcpost(const name& oracle_id, const struct_post& cPost) {
-        require_auth(oracle_id);
-
-        _orcpost(oracle_id, cPost);
-    }
-
-    void nftscribe::_orcpost(const name& oracle_id, const struct_post& cPost) {
-        uint128_t nPostId = get_post_count(cPost.network_id);
-
-        post_index posts(get_self(), cPost.network_id.value);
-
-        posts.emplace(oracle_id, [&](auto& p) {
-            p.id = nPostId;
-            p.post = cPost;
-        });
-
-        incr_post_count(cPost.network_id);
-    }
-
-
+    
     nftscribe::struct_oracle nftscribe::get_oracle(const name& oracle_id, const name& network_id) {
         name scope = network_id; 
         oracle_index _orc_table( get_self(), scope.value );
