@@ -3,6 +3,8 @@
 ACTION nftscribe::netwreg(const name& id, const string& title, const string& chain_id, const string& ticker, const string& block_expl) {
     require_auth(get_self());
 
+    checkfreeze();
+
     check(title.size() <= 128, "title is too large, limit of 128 characters. ");
     check(chain_id.size() <= 256, "chain_id is too large, limit of 256 characters. ");
     check(ticker.size() <= 32, "ticker is too large, limit of 32 characters. ");
@@ -14,6 +16,8 @@ ACTION nftscribe::netwreg(const name& id, const string& title, const string& cha
 ACTION nftscribe::netwactive(const name& id, const uint8_t& active) {
     require_auth(get_self());
 
+    checkfreeze();
+
     check((active == 0) || (active == 1), "active must be set to 0 or 1, other values are invalid.");
 
     _netwactive(id, active);
@@ -21,6 +25,8 @@ ACTION nftscribe::netwactive(const name& id, const uint8_t& active) {
 
 ACTION nftscribe::netwthresh(const name& id, const uint16_t& threshold) {
     require_auth(get_self());
+
+    checkfreeze();
 
     _netwthresh(id, threshold);
 }

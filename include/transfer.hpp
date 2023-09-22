@@ -16,15 +16,31 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
 
     check(nAmt > 0, "Insufficient funds sent. ");
 
+    //frozen state
+    uint64_t nfreeze = getglobalint(name("freeze"));
+
+    check(nfreeze != 2, "Transfers are disabled, contract is under maintenance. ");
+
     //*** Perform checks based on memo *******************************
-    if( ((memo.substr(0,12) == "sysdeposit!!")&&(memo.size() == 12)) &&  // for depositing system token into the contract
+    if( ((memo.substr(0,7) == "deposit")&&(memo.size() == 7)) &&  // for depositing the system token for future payment handle
         (to.value == get_self().value) &&
         (contract == getcontract()) &&
         (sUnit == getglobalstr(name("tokensymbol"))) ) {
         
         checkfreeze();
 
-        string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract under sysdeposit. ";
+        string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract. ";
+
+        adddeposit(from, quant, sMemo);
+
+    } else if( ((memo.substr(0,16) == "!sys.deposit-alpha!")&&(memo.size() == 19)) &&  // for depositing to admin side of contract
+        (to.value == get_self().value) &&
+        (contract == getcontract()) &&
+        (sUnit == getglobalstr(name("tokensymbol"))) ) {
+        
+        checkfreeze();
+
+        string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract. ";
 
         adddeposit(from, quant, sMemo);
 
@@ -32,6 +48,8 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
         // Other Types
         // memo string will be formatted as follows userid@network_id
         // Example:  "ad42.sfx@eth.mainnet"
+
+        checkfreeze();
 
         string aSplit = split(memo, "@");
         check(aSplit.size() == 2, "Invalid memo specified, memos should specify a virtual account user like: ad42.sfx@eth.mainnet ");

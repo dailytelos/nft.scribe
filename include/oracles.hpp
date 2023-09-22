@@ -33,6 +33,8 @@
 
     struct_oracle get_oracle(const name& oracle_id, const name& network_id);
 
+    bool is_oracle(const name& oracle_id, const name& network_id);
+
     uint64_t get_orcbpvotes(const name& oracle_id);
 
     uint64_t get_orctier(const name& oracle_id);

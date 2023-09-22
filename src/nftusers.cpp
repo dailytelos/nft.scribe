@@ -9,7 +9,7 @@ void nftscribe::_nftuser_token_transfer_in(name netw_id_to, name userid_to, stru
 
     // Modify user's balance
     nftusers.modify(user_itr, _self, [&](auto& user) {
-        user.u.add_token_to_balance(cToken.id, cToken.token); // Modified here
+        user.u.add_token_to_balance(cToken.id, cToken.token); 
     });
 
     // Call _nft_incr_token function
@@ -26,20 +26,20 @@ void nftscribe::_nftuser_token_transfer_out(name netw_id_from, name userid_from,
 
     // Modify user's balance
     nftusers.modify(user_itr, _self, [&](auto& user) {
-        user.u.sub_token_from_balance(cToken.id, cToken.token); // Modified here
+        user.u.sub_token_from_balance(cToken.id, cToken.token); 
         user.u.add_trx(cPost.tps_created); // Update recent transaction
     });
 
     // Send transfer action to "eosio.token"
     action(
         permission_level{ _self, "active"_n },
-        "eosio.token"_n,
+        cToken.contract,
         "transfer"_n,
-        std::make_tuple(_self, to, cToken.token, sMemo) // Modified here
+        std::make_tuple(_self, to, cToken.token, sMemo) 
     ).send();
 
     // Call _nft_decr_token function
-    _nft_decr_token(user_itr->u.suffix, netw_id_from, cToken); // Modified here
+    _nft_decr_token(user_itr->u.suffix, netw_id_from, cToken); 
     _decr_global_token_bal(cToken.id, cToken.token);  //update global token balance
 }
 
@@ -56,20 +56,20 @@ void nftscribe::_nftuser_token_transfer_internal(name netw_id_from, name userid_
 
     // Modify balances of both sender and receiver
     from_nftusers.modify(from_user_itr, _self, [&](auto& user) {
-        user.u.sub_token_from_balance(cToken.id, cToken.token); // Modified here
+        user.u.sub_token_from_balance(cToken.id, cToken.token); 
         user.u.add_trx(cPost.tps_created); // Update recent transaction
     });
 
     to_nftusers.modify(to_user_itr, _self, [&](auto& user) {
-        user.u.add_token_to_balance(cToken.id, cToken.token); // Modified here
+        user.u.add_token_to_balance(cToken.id, cToken.token); 
         user.u.add_trx(cPost.tps_created); // Update recent transaction
     });
 
     // Call _nft_decr_token function for sender
-    _nft_decr_token(from_user_itr->u.suffix, netw_id_to, cToken); // Modified here
+    _nft_decr_token(from_user_itr->u.suffix, netw_id_to, cToken); 
 
     // Call _nft_incr_token function for receiver
-    _nft_incr_token(to_user_itr->u.suffix, netw_id_to, cToken); // Modified here
+    _nft_incr_token(to_user_itr->u.suffix, netw_id_to, cToken); 
 }
 
 void nftscribe::_nftuser_exe_native(name netw_id_exe, name userid_exe, struct_post::struct_exe cExe, struct_post cPost) {
@@ -83,7 +83,6 @@ void nftscribe::_nftuser_exe_native(name netw_id_exe, name userid_exe, struct_po
     // Check if the action exists in the contract
     check(is_account(cExe.contract), "Contract account does not exist.");
 
-    // Execute the action on the external contract using .send()
     action(
         permission_level{userid_exe, "active"_n},
         cExe.contract, 

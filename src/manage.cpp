@@ -3,23 +3,31 @@
 ACTION nftscribe::sysglobalstr(name &var, string &sval) {
     require_auth( get_self() );
 
+    checkfreeze();
+
     setglobalstr(var, sval);
 }
 
 ACTION nftscribe::sysglobalint(name &var, uint64_t &nval) {
     require_auth( get_self() );
-    
+
+    checkfreeze();
+
     setglobalint(var, nval);
 }
 
 ACTION nftscribe::sysglobalast(name &var, asset &aval) {
     require_auth( get_self() );
     
+    checkfreeze();
+
     setglobalast(var, aval);
 }
 
 ACTION nftscribe::sysdefaults() {
     require_auth( get_self() );
+    
+    checkfreeze();
     
     //used in checkfreeze - Global contract freezing functionality
     // 1 - Freezes all public contract activity
@@ -69,6 +77,33 @@ ACTION nftscribe::sysdefaults() {
     //Oracle tier 2 - BP with more than 54 mil votes
     delglobal(name("orc.tiertwo"));
     setglobalint(name("orc.tiertwo"), 54000000);
+
+    //Pricing variables for suffix registration
+        //Pricing Setups Need to include RAM price estimates
+    delglobal(name("reg.price.1"));
+    delglobal(name("reg.price.2"));
+    delglobal(name("reg.price.3"));
+    delglobal(name("reg.price.4"));
+    delglobal(name("reg.price.5"));
+    delglobal(name("reg.price.a"));
+
+    setglobalast(name("reg.price.1"), system_asset(20000*10000));
+    setglobalast(name("reg.price.2"), system_asset(5000*10000));
+    setglobalast(name("reg.price.3"), system_asset(500*10000));
+    setglobalast(name("reg.price.4"), system_asset(75*10000));
+    setglobalast(name("reg.price.5"), system_asset(50*10000));
+    setglobalast(name("reg.price.a"), system_asset(10*10000));
+
+    //reg.cost.nft controls the price per account charged
+    // this will affect internal billing, when accounts are created, it'll decrement this balance
+    // once funds are deposited into this nftservice account, they may never be withdrawn
+    // When registering a new network, only 5% name("reg.cost.per") of NFT's must be pre-funded 
+    delglobal(name("reg.cost.nft"));
+    setglobalast(name("reg.cost.nft"), system_asset((int64_t) 0.07*10000)); //per NFT price, one user might use 150 Bytes to 180 Bytes
+
+    //Prefund percentage of calculated nft cost
+    delglobal(name("reg.pre.per"));
+    setglobalint(name("reg.pre.per"), 5);
 }
 
 ACTION nftscribe::sysdrawacct(name &acct, name &to, asset &quant, std::string &memo) {
@@ -130,11 +165,24 @@ ACTION nftscribe::sysdelglobal(name &var) {
     delglobal(var);
 }
 
-ACTION nftscribe::sysfreeze(uint64_t &freeze) {
-    require_auth( get_self() );
+ACTION nftscribe::sysfreeze(name &auth, uint64_t &freeze) {
+    require_auth(auth);
 
-    setglobalint(name("freeze"), freeze);
-    print("Contract frozen state updated.");
+    check((freeze >= 0) && (freeze <= 2), "freeze value is invalid. ");
+
+    if(auth.value == get_self().value) {
+        setglobalint(name("freeze"), freeze);
+        print("Contract frozen state updated.");
+
+        return;
+    } else if((get_orctier(auth) > 0) && (freeze > 0)) {  //block producers can freeze contract, cannot unfreeze
+        setglobalint(name("freeze"), freeze);
+        print("Contract frozen state updated by block producer.");
+
+        return;
+    }
+
+    check(false, "This is an administrator function only accessable by authorised participants. ");
 }
 
 ACTION nftscribe::draw(name &user) {

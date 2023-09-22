@@ -1,7 +1,11 @@
 //nftservice.cpp
 
-ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& website,  const string& admin_email) {
+ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
     require_auth(auth);
+
+    checkfreeze();
+
+    check(evm_owner == "", "Public ACTION nftregister cannot specify the evm_owner string. ");
 
     //Ensure Fees Were Paid
     asset deposit = getdepamt(auth);
@@ -22,12 +26,17 @@ ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& 
         setglobalast(name("acct.oracles"), new_balance);
     }
 
-    _nftregister(auth, suffix, network_id, nftcontract, contracts, admin, website, admin_email);
+    _nftregister(auth, suffix, network_id, nftcontract, contracts, admin, evm_owner, website, admin_email);
 }
 
-void nftscribe::_nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& website,  const string& admin_email) {
+void nftscribe::_nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
     
-    check(is_account(admin), "The specified admin account " + admin.to_string() + " does not exist. ");
+    if(evm_owner == "") {
+        check(is_account(admin), "The specified admin account " + admin.to_string() + " does not exist. ");
+    } else {
+        //verify is registered oracle
+        check(is_oracle(auth, network_id), "Only registered oracles may update existing records with evm_owner public key set. "); 
+    }
 
     check(nftcontract.size() <= 128, "nftcontract addresses are limited to 128 bytes long. ");
     check(contracts.size() <= 5, "Too many contracts vector is too large, limit of 5 contracts in total. ");
@@ -52,6 +61,7 @@ void nftscribe::_nftregister(const name& auth, const name& suffix, const name& n
             row.official    = 0;
             row.updates     = 0;
             row.admin       = admin;
+            row.evm_owner   = evm_owner;
             row.website     = website;
             row.admin_email = admin_email;
 
@@ -63,8 +73,10 @@ void nftscribe::_nftregister(const name& auth, const name& suffix, const name& n
     } else { //update existing registration
 
         //verify admin authority
-        check(auth.value == nftsrv_itr->admin.value, "Only the NFT service admin may update the settings. ");
-        require_auth(nftsrv_itr->admin);
+        if(evm_owner == "") {
+            check(auth.value == nftsrv_itr->admin.value, "Only the NFT service admin may update the settings. ");
+            require_auth(nftsrv_itr->admin);
+        }  //else is already verified as an oracle, so they would be updating via post
 
         check(nftsrv_itr->nftcontract == nftcontract, "You cannot update the NFT Contract (nftcontract), it is a permanent fixed value after registration. ");
 
@@ -73,11 +85,14 @@ void nftscribe::_nftregister(const name& auth, const name& suffix, const name& n
             row.website = website;
             row.admin_email = admin_email;
         });
+        
     }
 }
 
 ACTION nftscribe::nftactive(const name& auth, const name& suffix, const name& network_id, const uint8_t& active) {
     require_auth(auth);
+
+    checkfreeze();
 
     _nftactive(auth, suffix, network_id, active);
 }
@@ -103,6 +118,8 @@ void nftscribe::_nftactive(const name& auth, const name& suffix, const name& net
 
 ACTION nftscribe::nftaddtoken(const name& auth, const name& suffix, const name& network_id, const uint64_t& token_id) {
     require_auth(auth);
+
+    checkfreeze();
 
     _nftaddtoken(auth, suffix, network_id, token_id);
 }
@@ -144,6 +161,8 @@ void nftscribe::_nftaddtoken(const name& auth, const name& suffix, const name& n
 
 ACTION nftscribe::nftdeltoken(const name& auth, const name& suffix, const name& network_id, const uint64_t& token_id) {
     require_auth(auth);
+
+    checkfreeze();
 
     _nftdeltoken(auth, suffix, network_id, token_id);
 }

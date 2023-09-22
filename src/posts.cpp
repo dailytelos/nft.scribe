@@ -9,7 +9,7 @@ ACTION nftscribe::post(
     const name& post_action,
     const name& userid,
     const uint16_t& sign_type,
-    const string& eth_pub_key,
+    const string& evm_pub_key,
     const uint128_t& nft_id,
     const string& unsigned_data,
     const string& signed_data,
@@ -20,6 +20,8 @@ ACTION nftscribe::post(
     // Ensure that the action is authorized
     require_auth(get_self());
 
+    checkfreeze();
+
     // Call the private _post function
     _post(
         oracle_id,
@@ -29,7 +31,7 @@ ACTION nftscribe::post(
         post_action,
         userid,
         sign_type,
-        eth_pub_key,
+        evm_pub_key,
         nft_id,
         unsigned_data,
         signed_data,
@@ -48,7 +50,7 @@ void nftscribe::_post(
     const name& post_action,
     const name& userid,
     const uint16_t& sign_type,
-    const string& eth_pub_key,
+    const string& evm_pub_key,
     const uint128_t& nft_id,
     const string& unsigned_data,
     const string& signed_data,
@@ -79,7 +81,7 @@ void nftscribe::_post(
             userid,             //userid of poster from nftusers.hpp
             oracle_id,          //posted by
             sign_type,
-            eth_pub_key,
+            evm_pub_key,
             nft_id,
             unsigned_data,
             signed_data,
@@ -98,6 +100,8 @@ void nftscribe::_post(
 
 ACTION nftscribe::upvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id)  {
     require_auth(oracle_id);
+
+    checkfreeze();
 
     _upvote(oracle_id, network_id, posts_id);
     _orcrefresh(oracle_id, oracle_id, network_id);
@@ -145,6 +149,8 @@ void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uin
 
 ACTION nftscribe::downvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id)  {
     require_auth(oracle_id);
+
+    checkfreeze();
 
     _downvote(oracle_id, network_id, posts_id);
     _orcrefresh(oracle_id, oracle_id, network_id);

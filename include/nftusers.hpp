@@ -18,7 +18,7 @@ private:
 
     // scope: TABLE networks->id
     TABLE nftusers {
-        name userid;          // Username prefix may be 4 characters, suffixes may be up to 7 characters for a project.  Example: name("1234.suffixx");
+        name userid;          // Username prefix may be 4 characters, suffixes may be up to 7 characters for a project.  Example: name("12345.suffix");
         struct_nft_user u;
 
         uint64_t primary_key() const { return userid.value; }

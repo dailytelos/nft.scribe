@@ -12,6 +12,35 @@ it provides network management features and fosters an integrated ecosystem for 
 Our contract ensures a seamless experience for interoperability and functionalities vital for the thriving NFT community on the Telos platform.
 
 ---
+
+### TODO List:
+- FUNCTION: Create NFT User based on #
+- FUNCTION: NFT Pricing calculation function
+- FUNCTION: Billing function for account creation
+    - Add prefunding account to nftservice name("reg.cost.per"), it'll be paid by oracles if evm_owner is admin
+    - Prefunded % of users when registering
+
+---
+# Interchain NFT's Formats
+
+### Username Convention for Interchain NFT's
+
+Example: `aa42.crypto@eth.mainnet`
+
+
+Technical formatting: `std::string sName = name("xxxxx.suffix").to_string() + "@" + name("eth.mainnet");`
+- `xxxxx` allows for registration of **33,554,432** NFT accounts under one registration, more than needed.
+- `suffix` allows for `1,073,741,824` NFT service registrations for different NFT projects.
+- `@` used as a separator between the user and the network they operate on, like an email address.
+- `eth.mainnet` specifies the network_id the user is operating on
+
+---
+# Future Advancements
+Things to consider, if successfully deployed:
+- Premium user names (uint128_t secondary key) for each network, ownership of the premium name exists as NFT on network_id chain
+- Transaction fee implementation option to turn on if needed
+
+---
 ---
 
 # manage.hpp
@@ -24,7 +53,7 @@ Our contract ensures a seamless experience for interoperability and functionalit
 - sysdrawacct(`name &acct`, `name &to`, `asset &quant`, `std::string &memo`)
 - sysdeposit(`name &user`, `asset &quant`, `string &memo`)
 - sysdelglobal(`name &var`)
-- sysfreeze(`uint64_t &freeze`)
+- sysfreeze(`name &auth`, `uint64_t &freeze`)
 - draw(`name &user`)
 ### Tables
 - globalvars (`name var`, `string sval`, `uint64_t nval`, `asset aval`, `time_point_sec ts`, `string memo`)

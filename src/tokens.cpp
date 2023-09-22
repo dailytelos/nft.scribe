@@ -3,11 +3,15 @@
     ACTION nftscribe::sysaddtoken(const uint64_t& id, const name& contract, const string& sym_code, const uint8_t& prec) {
         require_auth(get_self());
 
+        checkfreeze();
+
         _sysaddtoken(id, contract, sym_code, prec);
     }
 
     ACTION nftscribe::sysdeltoken(const uint64_t& id) {
         require_auth(get_self());
+
+        checkfreeze();
 
         _sysdeltoken(id);
     }

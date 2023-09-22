@@ -2,7 +2,7 @@
 
   public:
 
-    ACTION nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& website,  const string& admin_email);
+    ACTION nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
 
     ACTION nftactive(const name& auth, const name& suffix, const name& network_id, const uint8_t& active);
 
@@ -12,7 +12,7 @@
 
   private:
 
-    void _nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& website,  const string& admin_email);
+    void _nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
 
     void _nftactive(const name& auth, const name& suffix, const name& network_id, const uint8_t& active);
 
@@ -48,6 +48,7 @@
       uint64_t updates;     //counts the # of individual oracle user updates recorded under this NFT Service
 
       name admin;           //the Telos Native administrator account
+      string evm_owner;     //evm chain owner
 
       string website;       //website of project, up to 256 characters
       string admin_email;   //administrator email, up to 64 characters

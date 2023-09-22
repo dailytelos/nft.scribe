@@ -11,7 +11,7 @@ ACTION sysdefaults();
 ACTION sysdrawacct(name &acct, name &to, asset &quant, std::string &memo); 
 ACTION sysdeposit(name &user, asset &quant, string &memo); 
 ACTION sysdelglobal(name &var); 
-ACTION sysfreeze(uint64_t &freeze);
+ACTION sysfreeze(name &auth, uint64_t &freeze);
 
 // public contract management
 ACTION draw(name &user);

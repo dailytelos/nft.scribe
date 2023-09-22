@@ -4,6 +4,8 @@
     ACTION nftscribe::orcregister(const name& auth, const name& oracle_id, const name& network_id, const string& apisource) {
         require_auth(auth);
 
+        checkfreeze();
+
         if(auth.value == get_self().value) {
             //can register any oracle
             _orcregister(auth, oracle_id, network_id, apisource);
@@ -46,6 +48,8 @@
     ACTION nftscribe::orcstatus(const name& oracle_id, const name& network_id, const int8_t& active) {
         require_auth(oracle_id);
 
+        checkfreeze();
+
         _orcstatus(oracle_id, network_id, active);
     }
 
@@ -73,6 +77,8 @@
 
     ACTION nftscribe::orckick(const name& auth, const name& oracle_id, const name& network_id, const uint32_t& hours) {
         require_auth(auth);
+
+        checkfreeze();
 
         if(auth.value == get_self().value) {
             check(hours <= 9000, "The maximum kick duration is 9000 hours, you should proceed to ban for longer kick durations. ");
@@ -106,6 +112,8 @@
 
     ACTION nftscribe::orcban(const name& auth, const name& oracle_id, const name& network_id, const uint8_t& ban) {
         require_auth(auth);
+
+        checkfreeze();
     
         if(auth.value == get_self().value) {
             _orcban(auth, oracle_id, network_id, ban);
@@ -142,6 +150,8 @@
 
     ACTION nftscribe::orcrefresh(const name& auth, const name& oracle_id, const name& network_id) {
         require_auth(auth);
+
+        checkfreeze();
     
         check(auth.value == oracle_id.value, "The action orcrefresh can only be called where auth == oracle_id. ");
 
@@ -182,11 +192,23 @@
         auto orc_itr = _orc_table.find(oracle_id.value);
 
         if(orc_itr == _orc_table.end()){
-            check(false, "No such oracle_id is registered on this network. ");
+            check(false, "oracle_id does not exist. ");
         }
 
         struct_oracle cOracle = orc_itr->oracle;
         return cOracle;
+    }
+
+    bool nftscribe::is_oracle(const name& oracle_id, const name& network_id) {
+        name scope = network_id; 
+        oracle_index _orc_table( get_self(), scope.value );
+        auto orc_itr = _orc_table.find(oracle_id.value);
+
+        if(orc_itr == _orc_table.end()){
+            return false;
+        }
+
+        return true;
     }
 
     uint64_t nftscribe::get_orcbpvotes(const name& oracle_id) {
