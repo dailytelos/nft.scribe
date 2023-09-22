@@ -64,6 +64,12 @@ struct struct_oracle {
         return (active == ORACLE_STATUS_ACTIVE);
     }
 
+    void set_not_active() {
+        if(is_active()) { 
+            active = ORACLE_STATUS_INACTIVE;
+        }
+    }
+
     
     void update() {
         if(is_kicked()) { check(false, "Oracle update not possible, oracle is kicked. "); }
@@ -79,6 +85,7 @@ struct struct_oracle {
         if(is_banned()) { check(false, "Oracle update not possible, oracle is banned. "); }
         check(is_active(), "Oracle is not registered as active, unable to vote. ");
 
+        last_update = time_point_sec(current_time_point().sec_since_epoch());
         trx_voted = trx_voted + 1;
     }
 
@@ -87,6 +94,7 @@ struct struct_oracle {
         if(is_banned()) { check(false, "Oracle update not possible, oracle is banned. "); }
         check(is_active(), "Oracle is not registered as active, unable to post. ");
 
+        last_update = time_point_sec(current_time_point().sec_since_epoch());
         trx_posted = trx_posted + 1;
     }
 

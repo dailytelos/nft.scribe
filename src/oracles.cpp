@@ -154,13 +154,26 @@
         oracle_index _orc_table( get_self(), scope.value );
         auto orc_itr = _orc_table.find(oracle_id.value);
 
-        if(orc_itr == _orc_table.end()){
-            check(false, "No such oracle_id is registered on this network. ");
-        } else {
-            _orc_table.modify( orc_itr, get_self(), [&]( auto& row ) {
-                row.oracle.update();
-            });
+        time_point_sec tps_inactive = time_point_sec(current_time_point().sec_since_epoch() - getglobalint(name("orc.inactive")));
+
+        // Ensure the specified oracle exists
+        check(orc_itr != _orc_table.end(), "No such oracle_id is registered on this network.");
+
+        // Iterate through all oracles in the given network_id scope
+        for (auto itr = _orc_table.begin(); itr != _orc_table.end(); ++itr) {
+            // Check if the last_update of the oracle is before tps_inactive
+            if (itr->oracle.last_update < tps_inactive) {
+                // If so, call the set_not_active() function on that oracle
+                _orc_table.modify( itr, get_self(), [&]( auto& row ) {
+                    row.oracle.set_not_active();
+                });
+            }
         }
+        
+        // Update the provided oracle
+        _orc_table.modify( orc_itr, get_self(), [&]( auto& row ) {
+            row.oracle.update();
+        });
     }
     
     nftscribe::struct_oracle nftscribe::get_oracle(const name& oracle_id, const name& network_id) {

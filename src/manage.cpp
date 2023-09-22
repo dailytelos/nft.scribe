@@ -42,8 +42,9 @@ ACTION nftscribe::sysdefaults() {
     delglobal(name("tokenprec"));
     setglobalint(name("tokenprec"), 4);
 
-    // add the above system token
-    //_sysaddtoken(...);
+    // controls the number of seconds, after which an oracle is considered inactive
+    delglobal(name("orc.inactive"));
+    setglobalint(name("orc.inactive"), 600);
 
     if(getglobalast(name("depositacct")).amount == 0) 
     {

@@ -100,6 +100,7 @@ ACTION nftscribe::upvote(const name& oracle_id, const name& network_id, const ui
     require_auth(oracle_id);
 
     _upvote(oracle_id, network_id, posts_id);
+    _orcrefresh(oracle_id, oracle_id, network_id);
 }
 
 void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id) {
@@ -146,6 +147,7 @@ ACTION nftscribe::downvote(const name& oracle_id, const name& network_id, const 
     require_auth(oracle_id);
 
     _downvote(oracle_id, network_id, posts_id);
+    _orcrefresh(oracle_id, oracle_id, network_id);
 }
 
 void nftscribe::_downvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id) {
@@ -177,7 +179,7 @@ bool nftscribe::has_post_met_threshold(const name& network_id, const uint64_t& p
     size_t total_votes = num_upvotes + post_itr->post.downvotes.size();
 
     // Ensure upvotes to total votes ratio is >= 0.70
-    bool meets_ratio = (static_cast<double>(num_upvotes) / static_cast<double>(total_votes)) >= 0.70;
+    bool meets_ratio = (static_cast<double>(num_upvotes) / static_cast<double>(total_votes)) >= ORACLE_APPROVAL_RATIO;
     
     // Check if the post upvotes have met or exceeded the threshold and meets the ratio.
     return (num_upvotes >= threshold) && meets_ratio; 
