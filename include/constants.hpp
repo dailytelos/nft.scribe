@@ -1,4 +1,13 @@
 
+//Set DEBUG_MODE (1= yes debug mode, 0= production)
+
+//#define DEBUG_MODE 0 //production mode
+#define DEBUG_MODE 1 //yes debug mode
+
+//In debug mode, DEBUG_FAKE_BP_VOTES will be the bp votes for any account
+#define DEBUG_FAKE_BP_VOTES 50000000
+
+
 //NAME STRING FOR "NULL" Placeholder name
 #define NAME_NULL "name.null...a"
 

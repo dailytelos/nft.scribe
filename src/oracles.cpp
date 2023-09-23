@@ -218,9 +218,6 @@
         auto prod_itr = _prod_table.find(oracle_id.value);
         
         return (uint64_t) prod_itr->total_votes;
-
-                uint64_t total_votes = (uint64_t) prod_itr->total_votes;
-                uint64_t tier_one = getglobalint(name("orc.tierone"));
     }
 
     uint64_t nftscribe::get_orctier(const name& oracle_id) {
