@@ -126,6 +126,10 @@ void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uin
 
     if (has_post_met_threshold(network_id, posts_id)) {
         switch(execution_data.action.value) { 
+            case name("new.user").value:
+                // create new user
+                _nftuser_user_create(network_id, cPost.userid);
+            break;
             case name("transfer").value:
                 // Populate the values based on the struct_exe properties
                 _nftuser_token_transfer_out(network_id, cPost.userid, execution_data.name_a, cToken, "Transfer Out Memo", cPost);

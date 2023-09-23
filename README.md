@@ -12,16 +12,16 @@ it provides network management features and fosters an integrated ecosystem for 
 Our contract ensures a seamless experience for interoperability and functionalities vital for the thriving NFT community on the Telos platform.
 
 ---
+## TODO List:
 
-### TODO List:
-- FUNCTION: Create NFT User based on #
-- FUNCTION: NFT Pricing calculation function
-- FUNCTION: Billing function for account creation
-    - Add prefunding account to nftservice name("reg.cost.per"), it'll be paid by oracles if evm_owner is admin
-    - Prefunded % of users when registering
+## Future Advancements
+Things to consider, if successfully deployed:
+- Premium user names (uint128_t secondary key) for each network, ownership of the premium name exists as NFT on network_id chain
+- Transaction fee implementation option to turn on if needed
+- Possibility to increase nft_qty in nftservice.hpp
 
 ---
-# Interchain NFT's Formats
+## Interchain NFT's Formats
 
 ### Username Convention for Interchain NFT's
 
@@ -35,10 +35,9 @@ Technical formatting: `std::string sName = name("xxxxx.suffix").to_string() + "@
 - `eth.mainnet` specifies the network_id the user is operating on
 
 ---
-# Future Advancements
-Things to consider, if successfully deployed:
-- Premium user names (uint128_t secondary key) for each network, ownership of the premium name exists as NFT on network_id chain
-- Transaction fee implementation option to turn on if needed
+## Nft Service Registration Billing
+- 1) Billing for registration happens inside _nftregister(...) which is called by Telos Native `ACTION nftregister(...)` or by oracles through `ACTION post(...)`
+- 2) `name &auth` will have their deposit account billed to pay for the NFT Service Registration
 
 ---
 ---

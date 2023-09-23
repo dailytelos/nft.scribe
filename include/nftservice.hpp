@@ -2,7 +2,7 @@
 
   public:
 
-    ACTION nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
+    ACTION nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const uint64_t& nft_qty, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
 
     ACTION nftactive(const name& auth, const name& suffix, const name& network_id, const uint8_t& active);
 
@@ -12,7 +12,7 @@
 
   private:
 
-    void _nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
+    void _nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const uint64_t& nft_qty, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email);
 
     void _nftactive(const name& auth, const name& suffix, const name& network_id, const uint8_t& active);
 
@@ -23,6 +23,10 @@
     void _nft_incr_token(const name& suffix, const name& network_id, const struct_token& cToken);
 
     void _nft_decr_token(const name& suffix, const name& network_id, const struct_token& cToken);
+
+    asset _calc_register_cost(name suffix);
+    
+    asset _calc_prefund(uint64_t nft_qty);
 
     //Virtual Accounts
     // ... will execute against ACTION virtualexe(...) using nftexe permission
@@ -38,6 +42,7 @@
     TABLE nftservice {
       name suffix;                    //id of network, also the virtual account suffix, this is used a scope in the accounts table (max 6 characters)
       string nftcontract;             //string up to 128 characters, for ERC721/etc. address of NFT contract, value can never be changed after registration
+      uint64_t nft_qty;               //max limit of nft accounts under this contract, set once and cannot be changed
       vector <string> contracts;      //These are associated contracts, can be vault standard ERC4626/etc.
                                       //if a user is found to have a valid NFT at any of these contracts, they will have account access
                                       //public oracles must be configured to find the users inside these other contracts
@@ -53,6 +58,7 @@
       string website;       //website of project, up to 256 characters
       string admin_email;   //administrator email, up to 64 characters
 
+      struct_token service_balance;    //use for billing to specific nft service
       vector <struct_token> tokens;    //list of tokens and balances contained in this specific nftservice
 
       //Future-proofing variables, may be needed for some networks

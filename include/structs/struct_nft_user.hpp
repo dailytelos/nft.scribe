@@ -22,6 +22,19 @@ struct struct_nft_user {
         suffix = name(NAME_NULL);
     }
 
+    struct_nft_user(name i_userid) {
+        
+        string sUserID = i_userid.to_string();
+        vector<string> aUserID = split(sUserID, ".");
+
+        check(aUserID.size() == 2, "Invalid i_userid supplied to struct_nft_user(...). ");
+        check((aUserID[0].size() <= 5) && (aUserID[0].size() > 0), "Invalid userid provided to struct_nft_user(...). ");
+        check((aUserID[1].size() <= 6) && (aUserID[1].size() > 0), "Invalid suffix provided to struct_nft_user(...). ");
+
+        userid = i_userid;
+        suffix = name(aUserID[1]);
+    }
+
     void add_trx(time_point_sec created) {
 
         verify_user(created);

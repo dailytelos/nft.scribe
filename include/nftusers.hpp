@@ -6,6 +6,7 @@ public:
 
 private:
 
+    void _nftuser_user_create(const name& network_id, const name& userid);
 
     void _nftuser_token_transfer_in(name netw_id_to, name userid_to, struct_token cToken, string sMemo);
 

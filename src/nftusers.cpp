@@ -1,5 +1,19 @@
 //nftusers.cpp
 
+void nftscribe::_nftuser_user_create(const name& network_id, const name& userid) {
+    nftuser_index nftuser_table(get_self(), network_id.value);
+
+    // Ensure the user does not already exist
+    auto itr = nftuser_table.find(userid.value);
+    check(itr == nftuser_table.end(), "User already exists in this network.");
+
+    // Emplace new user
+    nftuser_table.emplace(get_self(), [&](auto& user){
+        user.userid = userid;
+        user.u = struct_nft_user(userid);
+    });
+}
+
 void nftscribe::_nftuser_token_transfer_in(name netw_id_to, name userid_to, struct_token cToken, string sMemo) {
     nftuser_index nftusers(_self, netw_id_to.value);
     auto user_itr = nftusers.find(userid_to.value);

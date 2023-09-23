@@ -22,27 +22,30 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
     check(nfreeze != 2, "Transfers are disabled, contract is under maintenance. ");
 
     //*** Perform checks based on memo *******************************
-    if( ((memo.substr(0,7) == "deposit")&&(memo.size() == 7)) &&  // for depositing the system token for future payment handle
+    if( (memo.substr(0,7) == "deposit") &&  // for depositing the system token for future payment handle
         (to.value == get_self().value) &&
         (contract == getcontract()) &&
         (sUnit == getglobalstr(name("tokensymbol"))) ) {
         
         checkfreeze();
 
-        string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract. ";
+        if(memo.size() == 7) { //deposit into your personal account balance to be used for future payments
+            string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract. ";
 
-        adddeposit(from, quant, sMemo);
+            adddeposit(from, quant, sMemo);
+        } else { //deposit into a specific system account
+            vector <string> a_memo = split(memo, ":");
+            check(a_memo.size() == 2, "Invalid memo, must be formatted as 'deposit:acct.name' or simply 'deposit'. ")
 
-    } else if( ((memo.substr(0,16) == "!sys.deposit-alpha!")&&(memo.size() == 19)) &&  // for depositing to admin side of contract
-        (to.value == get_self().value) &&
-        (contract == getcontract()) &&
-        (sUnit == getglobalstr(name("tokensymbol"))) ) {
-        
-        checkfreeze();
+            name system_account = name(a_memo[1]);
 
-        string sMemo = from.to_string() + " deposited " + quant.to_string() + " into the contract. ";
+            asset prior_balance = getglobalast(system_account);
+                    
+            check(prior_balance.symbol.code().to_string() != "NULL", "The system account specified does not exist. ");
 
-        adddeposit(from, quant, sMemo);
+            asset new_balance = system_asset(prior_balance.amount + quant.amount);
+            setglobalast(system_account, new_balance);
+        };
 
     } else if(to.value == get_self().value) {
         // Other Types
@@ -65,6 +68,9 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
         struct_token cToken = gettoken(contract, cUnit);
 
         _nftuser_token_transfer_in(network_id, userid, cToken, memo);
+
+    } else {
+        //do nothing
     }
 }
 

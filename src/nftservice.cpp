@@ -1,18 +1,35 @@
 //nftservice.cpp
 
-ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
+ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const uint64_t& nft_qty, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
     require_auth(auth);
 
     checkfreeze();
 
     check(evm_owner == "", "Public ACTION nftregister cannot specify the evm_owner string. ");
 
-    //Ensure Fees Were Paid
-    asset deposit = getdepamt(auth);
-    asset fee = getglobalast(name("fee.nftserv"));
 
-    check(fee.amount >= 0,  "Oracle fee setting 'fee.nftserv' global variable must not be negative amount. ");
-    check(deposit.amount >= fee.amount, "You must first deposit " + fee.to_string() + " into account " + get_self().to_string() + " before you are able to register an NFT service. ");
+    _nftregister(auth, suffix, network_id, nftcontract, nft_qty, contracts, admin, evm_owner, website, admin_email);
+}
+
+void nftscribe::_nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const uint64_t& nft_qty, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
+    
+    if(evm_owner == "") {
+        check(is_account(admin), "The specified admin account " + admin.to_string() + " does not exist. ");
+    } else {
+        //verify is registered oracle
+        check(is_oracle(auth, network_id), "Only registered oracles may update existing records with evm_owner public key set. "); 
+    }
+
+    //--------------------------------------------------------------------------------------------------
+    //Charge fees using _calc_register_cost(suffix) to calculate fees
+    //Ensure prefunding balance is deposited into contract using 
+    asset deposit = getdepamt(auth);
+    asset fee = _calc_register_cost(suffix);
+    asset prefund = _calc_prefund(nft_qty);
+    asset total_dep = fee + prefund;
+
+    check(fee.amount >= 0,  "Oracle fee setting _calc_register_cost returned zero cost, error. ");
+    check(deposit.amount >= prefund.amount, "You must first deposit " + prefund.to_string() + " into account " + get_self().to_string() + " before you are able to register an NFT service. ");
 
     if(fee.amount > 0) { //charge NFT Service registration fee
         if(deposit.amount == fee.amount) {
@@ -21,22 +38,12 @@ ACTION nftscribe::nftregister(const name& auth, const name& suffix, const name& 
             subdeposit(auth, fee);
         }
 
-        asset prior_balance = getglobalast(name("acct.oracles"));
-        asset new_balance = system_asset(prior_balance.amount + fee.amount);
-        setglobalast(name("acct.oracles"), new_balance);
+        asset prior_balance = getglobalast(name("acct.ramfees"));
+        asset new_balance = system_asset(prior_balance.amount - fee.amount);
+        setglobalast(name("acct.ramfees"), new_balance);
     }
+    //--------------------------------------------------------------------------------------------------
 
-    _nftregister(auth, suffix, network_id, nftcontract, contracts, admin, evm_owner, website, admin_email);
-}
-
-void nftscribe::_nftregister(const name& auth, const name& suffix, const name& network_id, const string& nftcontract, const vector <string>& contracts, const name& admin, const string& evm_owner, const string& website,  const string& admin_email) {
-    
-    if(evm_owner == "") {
-        check(is_account(admin), "The specified admin account " + admin.to_string() + " does not exist. ");
-    } else {
-        //verify is registered oracle
-        check(is_oracle(auth, network_id), "Only registered oracles may update existing records with evm_owner public key set. "); 
-    }
 
     check(nftcontract.size() <= 128, "nftcontract addresses are limited to 128 bytes long. ");
     check(contracts.size() <= 5, "Too many contracts vector is too large, limit of 5 contracts in total. ");
@@ -56,6 +63,7 @@ void nftscribe::_nftregister(const name& auth, const name& suffix, const name& n
         _nftsrv_table.emplace( get_self(), [&]( auto& row ) {
             row.suffix      = suffix;
             row.nftcontract = nftcontract;
+            row.nft_qty     = nft_qty;
             row.contracts   = contracts;
             row.active      = 1;
             row.official    = 0;
@@ -245,5 +253,42 @@ void nftscribe::_nft_decr_token(const name& suffix, const name& network_id, cons
             service.tokens.erase(token_itr);
         }
     });
+}
+
+asset nftscribe::_calc_register_cost(name suffix) {
+    size_t suffix_len = suffix.to_string().size();
+
+    // Check for invalid suffix lengths
+    check(suffix_len != 0, "Suffix length cannot be 0.");
+    check(suffix_len <= 6, "Suffix length cannot be greater than 6.");
+
+    asset price_by_length;
+    if (suffix_len == 1) {
+        price_by_length = getglobalast(name("reg.price.1"));
+    } else if (suffix_len == 2) {
+        price_by_length = getglobalast(name("reg.price.2"));
+    } else if (suffix_len == 3) {
+        price_by_length = getglobalast(name("reg.price.3"));
+    } else if (suffix_len == 4) {
+        price_by_length = getglobalast(name("reg.price.4"));
+    } else if (suffix_len == 5) {
+        price_by_length = getglobalast(name("reg.price.5"));
+    } else {
+        price_by_length = getglobalast(name("reg.price.a"));
+    }
+
+    return price_by_length;
+}
+
+
+asset nftscribe::_calc_prefund(uint64_t nft_qty) {
+
+    asset nft_cost = getglobalast(name("reg.cost.nft")) * nft_qty;
+
+    double pre_percentage = static_cast<double>(getglobalint(name("reg.pre.per"))) / 100;
+
+    asset total_cost = nft_cost * pre_percentage;
+
+    return total_cost;
 }
 

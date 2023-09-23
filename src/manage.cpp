@@ -65,9 +65,9 @@ ACTION nftscribe::sysdefaults() {
     setglobalast(name("fee.nftserv"), system_asset(500000)); // 50 TLOS initial fee
 
     //Oracle Balance Account - Collected Fees to Pay Oracles
-    if(getglobalast(name("acct.oracles")).amount == 0) {
-        delglobal(name("acct.oracles"));
-        setglobalast(name("acct.oracles"), system_asset(0));
+    if(getglobalast(name("acct.ramfees")).amount == 0) {
+        delglobal(name("acct.ramfees"));
+        setglobalast(name("acct.ramfees"), system_asset(0));
     }
 
     //Oracle tier 1 - BP with more than 34 mil votes
@@ -87,6 +87,7 @@ ACTION nftscribe::sysdefaults() {
     delglobal(name("reg.price.5"));
     delglobal(name("reg.price.a"));
 
+    //character length pricing for suffix (eosio::name) length after converted with .to_string()
     setglobalast(name("reg.price.1"), system_asset(20000*10000));
     setglobalast(name("reg.price.2"), system_asset(5000*10000));
     setglobalast(name("reg.price.3"), system_asset(500*10000));
