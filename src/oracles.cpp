@@ -212,6 +212,11 @@
     }
 
     uint64_t nftscribe::get_orcbpvotes(const name& oracle_id) {
+
+        if(DEBUG_MODE == 1) {
+            return DEBUG_FAKE_BP_VOTES;
+        }
+        
         //check BP Votes
         name scope = name("eosio"); 
         producers_table _prod_table( get_self(), scope.value );
