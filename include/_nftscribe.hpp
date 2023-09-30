@@ -38,4 +38,6 @@ CONTRACT nftscribe : public contract {
     #include "./posts.hpp"
     #include "./oracles.hpp"
 
+    #include "./transfer.hpp"
+
 };

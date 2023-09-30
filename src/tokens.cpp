@@ -29,7 +29,6 @@
         // Check for existing tokens with the same secondary key
         auto existing_token = _tokens_table.get_index<name("contractsym")>();
         auto token_itr = existing_token.find(combined_key);
-        check(token_itr == existing_token.end(), "Token with the same contract and symbol already exists.");
 
         auto primary_itr = _tokens_table.find(id);
         if(primary_itr == _tokens_table.end()){
@@ -130,7 +129,7 @@
         uint128_t combined_key = (static_cast<uint128_t>(contract.value) << 64) | sym_code.raw();
 
         auto token_itr = existing_token.find(combined_key);
-        check(token_itr != existing_token.end(), "Token cannot be sent to this contract, it was not registered to the list of accepted tokens.");
+        check(token_itr != existing_token.end(), "Token is not registered to the list of accepted tokens.");
 
         struct_token cToken = token_itr->t;
         return cToken;

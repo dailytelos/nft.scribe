@@ -6,6 +6,7 @@ void nftscribe::_nftuser_user_create(const name& network_id, const name& userid)
     // Ensure the user does not already exist
     auto itr = nftuser_table.find(userid.value);
     check(itr == nftuser_table.end(), "User already exists in this network.");
+    
 
     // Emplace new user
     nftuser_table.emplace(get_self(), [&](auto& user){
@@ -110,3 +111,80 @@ void nftscribe::_nftuser_exe_native(name netw_id_exe, name userid_exe, struct_po
     });
 }
 
+// get_nft_number_from_name(name userid) -- version 10a (2023-09-30)
+// a-z & 1-5 are valid sName 1=1, 5=5, a=6, y=30, z=0
+uint64_t nftscribe::get_nft_number_from_name(name userid) {
+    vector<string> aName = split(userid.to_string(), ".");
+    check(aName.size() == 2, "Invalid userid specified for user.");
+
+    string sName = aName[0];  //max 5 digits
+    string sSuffix = aName[1]; //max 6 digits
+
+    check((sName.size() <= 5) && (sName.size() >= 1), "get_nft_number_from_name - Username of userid is too long / too short, between 5 and 1 digits inclusive. ");
+    check((sSuffix.size() <= 6) && (sSuffix.size() >= 1), "get_nft_number_from_name - Suffix of userid is too long / too short, between 6 and 1 digits inclusive. ");
+
+    // Helper function to convert character to its corresponding value
+    auto char_to_value = [](char c) -> uint64_t {
+        if (c >= '1' && c <= '5') return c - '0';
+        if (c >= 'a' && c <= 'y') return c - 'a' + 6;
+        if (c == 'z') return 0;  // Special case for 'z'
+        return 0;  // Default, shouldn't happen with checks in place
+    };
+
+    uint64_t result = 0;
+    for (size_t i = 0; i < sName.size(); ++i) {
+        result *= 31;  // Base 31
+        result += char_to_value(sName[i]);
+    }
+
+    return result;
+}
+
+// get_nft_name_from_number(uint64_t nft_number, name suffix) -- version 10b (2023-09-30)
+// a-z & 1-5 are valid sName 1=1, 5=5, a=6, y=30, z=0
+name nftscribe::get_nft_name_from_number(uint64_t nft_number, name suffix) {
+    
+    // Ensure the suffix is valid
+    check(suffix.length() >= 1 && suffix.length() <= 6, "Invalid suffix length. Must be between 1 and 6 characters.");
+
+    // Ensure nft_number is not past maximum allowed
+    check(nft_number <= 28629150, "get_nft_name_from_number received too high of a value for nft_number, max is 28629150. ");
+
+    // Helper function to convert a value into its corresponding character
+    auto value_to_char = [](uint64_t value) -> char {
+        if (value >= 1 && value <= 5) return '0' + value;
+        if (value >= 6 && value <= 30) return 'a' + value - 6;
+        if (value == 0) return 'z';  // Special case for 0
+        return ' ';  // Default, shouldn't happen with checks in place
+    };
+
+    string result_name = "";  // The string representation of the resulting name without the suffix
+
+    do {
+        uint64_t remainder = nft_number % 31;  // Get remainder of nft_number divided by 31
+        result_name.insert(result_name.begin(), value_to_char(remainder));  // Convert remainder to char and prepend to result_name
+        nft_number /= 31;  // Divide nft_number by 31 to get the next digit
+    } while (nft_number > 0);
+    
+    // Now we concatenate the name with the provided suffix
+    string full_name_string = result_name + "." + suffix.to_string();
+    name full_name(full_name_string);
+
+    return full_name;
+}
+
+//function only validates format, not whether user was created yet
+bool nftscribe::_nftuser_is_name_valid_format(name userid, uint64_t nft_number) {
+    vector <string> aName = split(userid.to_string(), ".");
+    check(aName.size() == 2, "_nftuser_name_valid - Invalid userid specified for user.");
+
+    string sName = aName[0];  //max 5 digits
+    string sSuffix = aName[1];
+
+    check((sName.size() <= 5) && (sName.size() >= 1), "Username of userid is too long / too short, between 5 and 1 digits inclusive. ");
+    check((sSuffix.size() <= 6) && (sSuffix.size() >= 1), "Suffix of userid is too long / too short, between 6 and 1 digits inclusive. ");
+
+    name name_from_nft_number = get_nft_name_from_number(nft_number, name(sSuffix));
+
+    return name_from_nft_number.value == userid.value;
+}

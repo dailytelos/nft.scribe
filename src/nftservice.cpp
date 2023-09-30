@@ -110,6 +110,8 @@ void nftscribe::_nftactive(const name& auth, const name& suffix, const name& net
     name scope = network_id; 
     nftsrv_index _nftsrv_table( get_self(), scope.value );
     auto nftsrv_itr = _nftsrv_table.find(suffix.value);
+    
+    check((active == 0) || (active == 1), "The active variable was set to a value out of bounds. ");
 
     if(nftsrv_itr == _nftsrv_table.end()){
         check(false, "NFT service with specified suffix does not exist. ");
@@ -194,17 +196,19 @@ void nftscribe::_nftdeltoken(const name& auth, const name& suffix, const name& n
 
         _nftsrv_table.modify( nftsrv_itr, get_self(), [&]( auto& row ) {
             
+            bool found = false;
             int i = 0;
             while(i < row.tokens.size()) {
                 if(row.tokens[i].id == token_id) {
                     check(row.tokens[i].token.amount == 0, "An NFT service may only delete tokens that have an absolute balance of zero for the project. ");
-                    // do nothing, here will remove it from the new vector of tokens
+                    found = true;
+                    //do nothing, just doing this will remove the element
                 } else {
                     vTokens.push_back(row.tokens[i]);
                 }
                 i++;
             }
-
+            check(found, "Token id was not found inside vector<struct_token> to be removed. ");
             row.tokens = vTokens;
         });
     }

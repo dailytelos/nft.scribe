@@ -7,16 +7,19 @@
 
   public:
 
-    //get_self() or a BP who has surpassed the vote threshold
+    //Can be called by get_self() "nft.scribe"
     ACTION orcregister(const name& auth, const name& oracle_id, const name& network_id, const string& apisource);
 
-    //requires the authority of the oracle itself
+    //can only be called by the oracle "orc1.scribe"
     ACTION orcstatus(const name& oracle_id, const name& network_id, const int8_t& active);
 
+    //Can be called by get_self() "nft.scribe"
     ACTION orckick(const name& auth, const name& oracle_id, const name& network_id, const uint32_t& hours);
 
+    //Can be called by get_self() "nft.scribe"
     ACTION orcban(const name& auth, const name& oracle_id, const name& network_id, const uint8_t& ban);
 
+    //can only be called by the oracle "orc1.scribe"
     ACTION orcrefresh(const name& auth, const name& oracle_id, const name& network_id);
 
   private:

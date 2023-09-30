@@ -35,7 +35,7 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
             adddeposit(from, quant, sMemo);
         } else { //deposit into a specific system account
             vector <string> a_memo = split(memo, ":");
-            check(a_memo.size() == 2, "Invalid memo, must be formatted as 'deposit:acct.name' or simply 'deposit'. ")
+            check(a_memo.size() == 2, "Invalid memo, must be formatted as 'deposit:acct.name' or simply 'deposit'. ");
 
             name system_account = name(a_memo[1]);
 
@@ -54,18 +54,24 @@ void on_transfer(name from, name to, asset quant, std::string memo) {
 
         checkfreeze();
 
-        string aSplit = split(memo, "@");
+        vector<string> aSplit = split(memo, "@");
         check(aSplit.size() == 2, "Invalid memo specified, memos should specify a virtual account user like: ad42.sfx@eth.mainnet ");
 
         name network_id = name(aSplit[1]);
         name userid = name(aSplit[0]);
 
-        string aSplit2 = split(aSplit[0], ".");
+        vector<string> aSplit2 = split(aSplit[0], ".");
         check(aSplit2.size() == 2, "Invalid memo specified, memos should specify a virtual account user like: ad42.sfx@eth.mainnet ");
 
         name suffix = name(aSplit2[1]);
 
         struct_token cToken = gettoken(contract, cUnit);
+
+        check(contract.value == cToken.contract.value, "Mis-match of contracts, unable to send. ");
+        check(cToken.token.symbol.code() == quant.symbol.code(), "Mis-match of symbol_code, unable to send. ");
+        check(cToken.token.symbol.precision() == quant.symbol.precision(), "Mis-match of precision, unable to send. ");
+
+        cToken.token.amount = quant.amount;
 
         _nftuser_token_transfer_in(network_id, userid, cToken, memo);
 

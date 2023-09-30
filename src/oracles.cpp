@@ -55,7 +55,8 @@
 
     void nftscribe::_orcstatus(const name& oracle_id, const name& network_id, const int8_t& active) {
 
-        check((active >= ORACLE_STATUS_BANNED) && (active <= ORACLE_STATUS_ACTIVE), "Invalid active value passed to _orcstatus(...). ");
+        check((active >= ORACLE_STATUS_BANNED) && (active <= ORACLE_STATUS_ACTIVE), "Invalid active range value passed to _orcstatus(...). ");
+        check((active == ORACLE_STATUS_INACTIVE) || (active == ORACLE_STATUS_ACTIVE), "Invalid active value outside of allow passed to _orcstatus(...). ");
 
         name scope = network_id; 
         oracle_index _orc_table( get_self(), scope.value );
@@ -71,6 +72,7 @@
 
                 row.oracle.active = active;
                 row.oracle.kick_expires = time_point_sec(0);
+                row.oracle.last_update = time_point_sec(current_time_point().sec_since_epoch());
             });
         }
     }
@@ -175,7 +177,9 @@
             if (itr->oracle.last_update < tps_inactive) {
                 // If so, call the set_not_active() function on that oracle
                 _orc_table.modify( itr, get_self(), [&]( auto& row ) {
-                    row.oracle.set_not_active();
+                    if(row.id.value != oracle_id.value) {
+                        row.oracle.set_not_active();
+                    }
                 });
             }
         }

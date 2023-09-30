@@ -16,6 +16,11 @@ private:
 
     void _nftuser_exe_native(name netw_id_exe, name userid_exe, struct_post::struct_exe cExe, struct_post cPost);
 
+    uint64_t get_nft_number_from_name(name userid);
+
+    name get_nft_name_from_number(uint64_t nft_number, name suffix);
+
+    bool _nftuser_is_name_valid_format(name userid, uint64_t nft_number);
 
     // scope: TABLE networks->id
     TABLE nftusers {

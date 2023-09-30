@@ -45,6 +45,7 @@ void nftscribe::_netwreg(const name& id, const string& title, const string& chai
             row.chain_id = chain_id;
             row.active = 0;
             row.ticker = ticker;
+            row.threshold = 10;
             row.block_expl = block_expl;
             row.post_count = 0;
         });

@@ -71,7 +71,7 @@ struct struct_nft_user {
     }
 
     void add_token_to_balance(uint64_t id, asset token_asset) {
-        check(token_asset.amount > 0, "Token amount must be positive.");
+        check(token_asset.amount > 0, "add_token_to_balance - Token amount must be positive: " + token_asset.to_string());
 
         auto existing_token_itr = find_if(wallet.begin(), wallet.end(), [&](const token_entry& t) {
             return t.id == id;
@@ -87,7 +87,7 @@ struct struct_nft_user {
     }
 
     void sub_token_from_balance(uint64_t id, asset token_asset) {
-        check(token_asset.amount > 0, "Token amount must be positive.");
+        check(token_asset.amount > 0, "sub_token_from_balance - Token amount must be positive: " + token_asset.to_string());
 
         auto existing_token_itr = find_if(wallet.begin(), wallet.end(), [&](const token_entry& t) {
             return t.id == id;

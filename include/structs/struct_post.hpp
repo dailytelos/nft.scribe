@@ -112,19 +112,15 @@ struct struct_post {
             
     struct_exe exe_out() {
         string exe_data_string = parse_json(unsigned_data, "exe_data");
-        vector<string> parts;
+        vector<string> parts = split(exe_data_string, "|");
 
-        size_t start = 0;
-        size_t end = exe_data_string.find(',');
+        //check(false, "exe_string = " + exe_data_string);
 
-        while (end != string::npos) {
-            parts.push_back(exe_data_string.substr(start, end - start));
-            start = end + 1;
-            end = exe_data_string.find(',', start);
-        }
-        parts.push_back(exe_data_string.substr(start, end));
-
-        eosio::check(parts.size() >= 9, "Invalid data format"); // Ensure there are enough parts to avoid out-of-bounds errors
+        eosio::check(parts.size() == 9, "Invalid data format inside unsigned_data variable inside post# " + to_string(id)); // Ensure a matching quantity of parts
+        
+        //example exe_data
+        // "name_a,name_b,uint_a,uint_b,int_a,int_b,str_a,str_b,a_token"
+        // "name.null...a|name.null...a|0|0|0|0|||0.0000 NULL"
 
         return struct_exe(
             contract,               
@@ -144,6 +140,7 @@ struct struct_post {
     void upvote(name i_oracle_id) {
         // Check if i_oracle_id is already in the upvotes vector
         auto itr = std::find(upvotes.begin(), upvotes.end(), i_oracle_id);
+
         if (itr == upvotes.end()) {
             upvotes.push_back(i_oracle_id);
         } else {
@@ -215,13 +212,13 @@ struct struct_post {
     void verify_created() {
         string s_tps_created = parse_json(unsigned_data, "tps_created");
 
-        check(std::stoi(s_tps_created) == tps_created.sec_since_epoch(), "verify_created() failed, invalid data supplied by oracle. ");
+        check(convert_string_to_time_point(s_tps_created) == tps_created, "verify_created() failed, invalid data supplied by oracle (" + convert_string_to_time_point(s_tps_created).to_string() + " != " + tps_created.to_string() + "). ");
     }
 
     void verify_expires() {
         string s_tps_expires = parse_json(unsigned_data, "tps_expires");
 
-        check(std::stoi(s_tps_expires) == tps_expires.sec_since_epoch(), "verify_expires() failed, invalid data supplied by oracle. ");
+        check(convert_string_to_time_point(s_tps_expires) == tps_expires, "verify_expires() failed, invalid data supplied by oracle. ");
     }
 
     void verify_time() {
@@ -232,7 +229,8 @@ struct struct_post {
                             //  4) if current time is after tps_expires, transaction is invalidated
                             //  5) tps_created must be before or equal to now
 
-        uint32_t       n_now = current_time_point().sec_since_epoch();
+        time_point_sec t_now = current_time_point();
+        uint32_t       n_now = t_now.sec_since_epoch();
 
         //#1
         check((tps_created.sec_since_epoch() + GLOBAL_MAX_TRX_SECONDS) >= tps_posted.sec_since_epoch(), "Post generated in wrong timeframe. ");
@@ -243,7 +241,7 @@ struct struct_post {
         //#4
         check(n_now < tps_expires.sec_since_epoch(), "Post transaction expired. ");
         //#5
-        check(n_now >= tps_created.sec_since_epoch(), "Future transactions are invalid. ");
+        check(n_now >= tps_created.sec_since_epoch(), "Future transactions are invalid (" + t_now.to_string() + " < " + tps_created.to_string() + ")");
     }
 
     void verify() {
@@ -338,5 +336,49 @@ struct struct_post {
     }
 
 
-    EOSLIB_SERIALIZE(struct_post, (id)(network_id)(suffix)(post_action)(userid)(posted_by)(sign_type)(pub_key)(nft_id)(unsigned_data)(signed_data)(upvotes)(downvotes)(tps_posted)(tps_created)(tps_expires));
+    time_point_sec convert_string_to_time_point(const string& sTime) {
+        check((sTime.size() == 19 && (sTime[10] == ' ' || sTime[10] == 'T')), "Invalid datetime string format");
+
+        // Extract year, month, day, etc. from the string
+        int year = stoi(sTime.substr(0, 4));
+        int month = stoi(sTime.substr(5, 2));
+        int day = stoi(sTime.substr(8, 2));
+        int hour = stoi(sTime.substr(11, 2));
+        int minute = stoi(sTime.substr(14, 2));
+        int second = stoi(sTime.substr(17, 2));
+
+        int days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+        // Adjust for leap years
+        if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+            days_in_month[2] = 29;
+        }
+
+        long calc_seconds = 0;
+
+        // Calculate days for years since epoch
+        for (int y = 1970; y < year; y++) {
+            calc_seconds += 31536000; // 365 days in seconds
+            if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) {
+                calc_seconds += 86400; // 1 day in seconds for leap years
+            }
+        }
+
+        // Calculate days for months since the beginning of the year
+        for (int m = 1; m < month; m++) {
+            calc_seconds += days_in_month[m] * 86400;
+        }
+
+        // Add days, hours, minutes and seconds
+        calc_seconds += (day - 1) * 86400;
+        calc_seconds += hour * 3600;
+        calc_seconds += minute * 60;
+        calc_seconds += second;
+
+        time_point_sec result = time_point_sec(calc_seconds);
+        return result;
+    }
+
+
+    EOSLIB_SERIALIZE(struct_post, (id)(network_id)(suffix)(contract)(post_action)(userid)(posted_by)(sign_type)(pub_key)(nft_id)(unsigned_data)(signed_data)(upvotes)(downvotes)(tps_posted)(tps_created)(tps_expires));
 };

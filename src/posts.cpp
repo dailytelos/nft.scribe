@@ -17,10 +17,11 @@ ACTION nftscribe::post(
     const time_point_sec& tps_created,
     const time_point_sec& tps_expires
 ) {
-    // Ensure that the action is authorized
-    require_auth(get_self());
-
     checkfreeze();
+
+    // Ensure that the action is authorized, that they are a registered oracle on the network
+    struct_oracle cOracle = get_oracle(oracle_id, network_id);
+    check(cOracle.is_active(), "Oracle status is not set to active, unable to post. ");
 
     // Call the private _post function
     _post(
@@ -91,6 +92,8 @@ void nftscribe::_post(
             tps_created,
             tps_expires
         );
+
+        row.post.verify();
     });
 
     // Increment the global ID variable
@@ -108,6 +111,7 @@ ACTION nftscribe::upvote(const name& oracle_id, const name& network_id, const ui
 }
 
 void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id) {
+
     post_index posts(_self, network_id.value); 
 
     auto itr = posts.find(posts_id);
@@ -116,29 +120,35 @@ void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uin
     struct_post cPost;
     posts.modify(itr, _self, [&](auto& p) {
         p.post.upvote(oracle_id);
+        p.post.verify();
         cPost = p.post;
     });
 
     // Call exe_out and get the returned struct_exe
     struct_post::struct_exe execution_data = cPost.exe_out();
 
-    struct_token cToken = gettoken(cPost.contract, execution_data.a_token.symbol.code());
+    //validates userid matches nft_id number
+    check(_nftuser_is_name_valid_format(execution_data.name_a, cPost.nft_id), "Name provided " + execution_data.name_a.to_string() + " is invalid for #(" + std::to_string(static_cast<long long>(cPost.nft_id)) + ").");
+
+    struct_token cToken;
 
     if (has_post_met_threshold(network_id, posts_id)) {
         switch(execution_data.action.value) { 
             case name("new.user").value:
-                // create new user
-                _nftuser_user_create(network_id, cPost.userid);
+                //exe_data: "1.nft|name.null...a|0|0|0|0|||0.0000 NULL"
+                _nftuser_user_create(network_id, execution_data.name_a);
             break;
             case name("transfer").value:
-                // Populate the values based on the struct_exe properties
+                
+                cToken = gettoken(cPost.contract, execution_data.a_token.symbol.code());
                 _nftuser_token_transfer_out(network_id, cPost.userid, execution_data.name_a, cToken, "Transfer Out Memo", cPost);
             break;
             case name("transfer.in").value:
+                
+                cToken = gettoken(cPost.contract, execution_data.a_token.symbol.code());
                 _nftuser_token_transfer_internal(network_id, cPost.userid, execution_data.name_b, execution_data.name_a, cToken, "Transfer In Memo", cPost);
             break;
-            default:
-                _nftuser_exe_native(network_id, cPost.userid, execution_data, cPost);
+            default:  //execute nothing, invalid action, but execution will also prevent it from being stuck in system
             break;
         }
 
@@ -168,6 +178,7 @@ void nftscribe::_downvote(const name& oracle_id, const name& network_id, const u
 
     posts.modify(itr, _self, [&](auto& p) {
         p.post.downvote(oracle_id);
+        p.post.verify();
     });
 }
 
@@ -188,7 +199,7 @@ bool nftscribe::has_post_met_threshold(const name& network_id, const uint64_t& p
     size_t num_upvotes = post_itr->post.upvotes.size();
     size_t total_votes = num_upvotes + post_itr->post.downvotes.size();
 
-    // Ensure upvotes to total votes ratio is >= 0.70
+    // Ensure upvotes to total votes ratio is >= ORACLE_APPROVAL_RATIO
     bool meets_ratio = (static_cast<double>(num_upvotes) / static_cast<double>(total_votes)) >= ORACLE_APPROVAL_RATIO;
     
     // Check if the post upvotes have met or exceeded the threshold and meets the ratio.
