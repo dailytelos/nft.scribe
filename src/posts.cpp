@@ -117,12 +117,19 @@ void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uin
     auto itr = posts.find(posts_id);
     check(itr != posts.end(), "Post not found.");
 
+    //if expired, then just delete, cannot be upvoted or executed
+    if (current_time_point().sec_since_epoch() > itr->post.tps_expires.sec_since_epoch()) {
+        posts.erase(itr); 
+        return;
+    }
+
     struct_post cPost;
     posts.modify(itr, _self, [&](auto& p) {
         p.post.upvote(oracle_id);
         p.post.verify();
         cPost = p.post;
     });
+
 
     // Call exe_out and get the returned struct_exe
     struct_post::struct_exe execution_data = cPost.exe_out();
@@ -154,11 +161,7 @@ void nftscribe::_upvote(const name& oracle_id, const name& network_id, const uin
 
         posts.erase(itr); 
 
-    } else {
-        if (current_time_point().sec_since_epoch() > cPost.tps_expires.sec_since_epoch()) {
-            posts.erase(itr); 
-        }
-    }
+    } 
 }
 
 ACTION nftscribe::downvote(const name& oracle_id, const name& network_id, const uint64_t& posts_id)  {
@@ -175,6 +178,12 @@ void nftscribe::_downvote(const name& oracle_id, const name& network_id, const u
 
     auto itr = posts.find(posts_id);
     check(itr != posts.end(), "Post not found.");
+
+    //if expired, then just delete, cannot be upvoted or executed
+    if (current_time_point().sec_since_epoch() > itr->post.tps_expires.sec_since_epoch()) {
+        posts.erase(itr);
+        return;
+    }
 
     posts.modify(itr, _self, [&](auto& p) {
         p.post.downvote(oracle_id);

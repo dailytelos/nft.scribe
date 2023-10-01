@@ -296,3 +296,40 @@ asset nftscribe::_calc_prefund(uint64_t nft_qty) {
     return total_cost;
 }
 
+
+bool nftscribe::has_token_in_nftservice(const name& network_id, const name& suffix, const uint64_t& id) {
+    // Create an index to the "nftservices" table
+    nftsrv_index nftservices(get_self(), network_id.value);
+
+    // Find the service using the provided suffix
+    auto service_itr = nftservices.find(suffix.value);
+    check(service_itr != nftservices.end(), "NFT service with provided suffix not found");
+
+    // Iterate over all tokens in the found service
+    for (const auto& token : service_itr->tokens) {
+        if (token.id == id) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+nftscribe::struct_token nftscribe::get_token_from_nftservice(const name& network_id, const name& suffix, const uint64_t& id) {
+    // Create an index to the "nftservices" table
+    nftsrv_index nftservices(get_self(), network_id.value);
+
+    // Find the service using the provided suffix
+    auto service_itr = nftservices.find(suffix.value);
+    check(service_itr != nftservices.end(), "NFT service with provided suffix not found");
+
+    // Iterate over all tokens in the found service
+    for (const auto& token : service_itr->tokens) {
+        if (token.id == id) {
+            return token;
+        }
+    }
+
+    check(false, "Token with the given id not found");
+    return struct_token();  // This line will never be reached, but it's here to silence compiler warnings
+}

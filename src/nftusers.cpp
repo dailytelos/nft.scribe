@@ -22,6 +22,10 @@ void nftscribe::_nftuser_token_transfer_in(name netw_id_to, name userid_to, stru
     // Ensure user exists
     eosio::check(user_itr != nftusers.end(), "User not found.");
 
+    //check that token is registered in nftservice
+    name suffix = get_suffix_from_userid(userid_to);
+    check(has_token_in_nftservice(netw_id_to, suffix, cToken.id), "Token not registered inside this nft service (" + suffix.to_string() + ")");
+
     // Modify user's balance
     nftusers.modify(user_itr, _self, [&](auto& user) {
         user.u.add_token_to_balance(cToken.id, cToken.token); 
@@ -68,6 +72,10 @@ void nftscribe::_nftuser_token_transfer_internal(name netw_id_from, name userid_
     // Ensure both users exist
     eosio::check(from_user_itr != from_nftusers.end(), "Sender not found.");
     eosio::check(to_user_itr != to_nftusers.end(), "Receiver not found.");
+
+    //check that token is registered in nftservice
+    name suffix = get_suffix_from_userid(userid_to);
+    check(has_token_in_nftservice(netw_id_to, suffix, cToken.id), "Token not registered inside this nft service (" + suffix.to_string() + ")");
 
     // Modify balances of both sender and receiver
     from_nftusers.modify(from_user_itr, _self, [&](auto& user) {
@@ -138,6 +146,15 @@ uint64_t nftscribe::get_nft_number_from_name(name userid) {
     }
 
     return result;
+}
+
+name nftscribe::get_suffix_from_userid(name userid) {
+
+    vector<string> aUserID = split(userid.to_string(), ".");
+
+    check(aUserID.size() == 2, "Invalid userid passed to get_suffix_from_userid().");
+
+    return name(aUserID[0]);
 }
 
 // get_nft_name_from_number(uint64_t nft_number, name suffix) -- version 10b (2023-09-30)

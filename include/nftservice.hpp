@@ -28,6 +28,10 @@
     
     asset _calc_prefund(uint64_t nft_qty);
 
+    bool has_token_in_nftservice(const name& network_id, const name& suffix, const uint64_t& id);
+
+    struct_token get_token_from_nftservice(const name& network_id, const name& suffix, const uint64_t& id);
+
     //Virtual Accounts
     // ... will execute against ACTION virtualexe(...) using nftexe permission
     //
