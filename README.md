@@ -29,8 +29,9 @@ Example: `aa42.crypto@eth.mainnet`
 
 
 Technical formatting: `std::string sName = name("xxxxx.suffix").to_string() + "@" + name("eth.mainnet");`
-- `xxxxx` allows for registration of **33,554,432** NFT accounts under one registration, more than needed.
-- `suffix` allows for `1,073,741,824` NFT service registrations for different NFT projects.
+- Basic format: `1.nft@eth.mainnet`
+- `xxxxx` allows for registration of `#0 to #28,629,150` NFT accounts under one registration, more than needed.
+- `suffix` allows for `887,503,681` NFT service registrations for different NFT projects.
 - `@` used as a separator between the user and the network they operate on, like an email address.
 - `eth.mainnet` specifies the network_id the user is operating on
 
